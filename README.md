@@ -269,7 +269,7 @@ Examples
     $0->$1->$0+$1 :: num->num->num
 
     % A lambda expression can have alternative definitions (of the same type)
-    % separated by ';', for example the fac function:
+    % separated by ';', for example the factorial function:
 
     % a function with argument specializations:
     > fact(0) := 1;
@@ -609,6 +609,14 @@ Husky program examples:
     queens.sky            the queens problem
     semantics.sky         denotational semantics example
 
+After starting Husky, load any one of the example .sky files with:
+
+    > load "examples/<filename>".
+
+To delete examples from memory and reset Husky to system defaults:
+
+    > reset.
+
 To create a stand-alone executable, start Prolog using `swipl' and enter:
 
     :- [husky].
@@ -617,10 +625,6 @@ To create a stand-alone executable, start Prolog using `swipl' and enter:
     2> bye.
 
 This creates the `husky' executable with the prelude functions preloaded.
-
-After starting Husky, load any one of the example .sky files in Husky with:
-
-    1> load "<filename>".
 
 Author
 ------
