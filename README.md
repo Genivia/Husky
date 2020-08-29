@@ -6,7 +6,7 @@ Lazy functional programming with Husky
 - [Types](#types)
 - [Examples](#examples)
 - [Functions](#functions)
-- [List comprehensions](#list-comprehensions)
+- [List comprehension](#list-comprehension)
 - [Macros](#macros)
 - [Special constructs](#special-constructs)
 - [Lambdas](#lambdas)
@@ -19,7 +19,7 @@ Lazy functional programming with Husky
 Husky is a lazy functional language similar to Haskell.  Husky implements a
 Hindley-Milner-style parametric polymorphic type system, higher-order
 functions, argument pattern matching for function specialization, currying,
-macros, list comprehensions, and monads.
+macros, list comprehension, and monads.
 
 Husky uses NOR (normal order reduction), WHNF (weak head normal form), sharing
 (an important lazy evaluation optimization), and lazy constructors to create
@@ -87,8 +87,9 @@ Values are Booleans `true` and `false`, numbers, strings (quoted with `"`),
 lists written with `[` and `]` brackets, and arbitrary data structures.
 
 At the Husky prompt you can enter expressions which are evaluated and the
-answer is returned together with its type.  Global type declarations and
-function definitions entered at the command prompt are stored with the program.
+answer is returned together with its inferred type.  Global type declarations
+and function definitions entered at the command prompt are stored with the
+program.  Input may span one or more lines and should end with a period (`.`).
 
     > 1+2.
     3 :: num
@@ -139,9 +140,6 @@ Lists in Husky are written with brackets, for example`[]` and `[1,2]`.  The
 special form `[x|xs]` represents a list with head expression `x` and tail
 expression `xs`.  The dot notation `x.xs` is also allowed to represent a list
 with head `x` and tail `xs`, where `.` is the list constructor function.
-
-Definitions and expressions entered at the command prompt shoud be terminated
-by a period (`.`).
 
 Definitions
 -----------
@@ -274,11 +272,13 @@ Examples
     % separated by ';', for example the fac function:
 
     % a function with argument specializations:
-    > fac(0) := 1;
-      fac(n) := n*fac(n-1).
+    > fact(0) := 1;
+      fact(n) := n*fact(n-1).
     DEFINED fac::num->num
-    > fac.
+    > fact.
     0->1;$0->$0*fac($0-1) :: num->num
+    > fact(6).
+    720 :: num
 
     % Constants can be used to construct new data types, like BinTree:
 
@@ -402,8 +402,8 @@ Built-in operators and functions are defined in prelude.sky:
     curry       curry function curry(f, x, y) := f((x, y))
     uncurry     uncurry function uncurry(f, (x, y)) := f(x, y)
 
-List comprehensions
--------------------
+List comprehension
+------------------
 
 A list comprehension has the following form:
 
