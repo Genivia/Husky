@@ -587,10 +587,35 @@ Then clone Husky with git:
 
     $ git clone https://github.com/Genivia/husky
 
+Run `swipl` then load Husky and run the `husky` interpreter:
+
+    $ swipl
+    ?- [husky].
+    :- husky.
+    > 
+
+After starting Husky, load any one of the example .sky files with:
+
+    > load "examples/<filename>".
+
+To delete examples from memory and reset Husky to system defaults:
+
+    > reset.
+
+To create a stand-alone executable, run `swipl' and enter:
+
+    $ swipl
+    :- [husky].
+    :- husky.
+    > save.
+    > bye.
+
+This creates the `husky' executable with the prelude functions preloaded.
+
 Husky source files:
 
     README.md             this file
-    husky.pl              the Husky interpreter written in SWI-Prolog
+    husky.pl              the Husky interpreter
     prelude.sky           built-in definitions
 
 Husky program examples:
@@ -609,27 +634,10 @@ Husky program examples:
     queens.sky            the queens problem
     semantics.sky         denotational semantics example
 
-After starting Husky, load any one of the example .sky files with:
-
-    > load "examples/<filename>".
-
-To delete examples from memory and reset Husky to system defaults:
-
-    > reset.
-
-To create a stand-alone executable, start Prolog using `swipl' and enter:
-
-    :- [husky].
-    :- husky.
-    1> save.
-    2> bye.
-
-This creates the `husky' executable with the prelude functions preloaded.
-
 Author
 ------
 
-Prof. Robert A. van Engelen, engelen@acm.org.
+Husky is created by Prof. Robert A. van Engelen, engelen@acm.org.
 
 License
 -------
