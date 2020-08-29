@@ -1,6 +1,21 @@
 Lazy functional programming with Husky
 ======================================
 
+- [Husky syntax](#husky-syntax)
+- [Definitions](#definitions)
+- [Types](#types)
+- [Examples](#examples)
+- [Functions](#functions)
+- [List comprehensions](#list-comprehensions)
+- [Macros](#macros)
+- [Special constructs](#special-constructs)
+- [Lambdas](#lambdas)
+- [Commands](#commands)
+- [Gotchas](#gotchas)
+- [Installation](#installation)
+- [Author](#author)
+- [License](#license)
+
 Husky is a lazy functional language similar to Haskell.  Husky implements a
 Hindley-Milner-style parametric polymorphic type system, higher-order
 functions, argument pattern matching for function specialization, macros,
@@ -60,8 +75,8 @@ Because Husky evaluation rules and type inference rules are defined in Prolog,
 the implementation is easy to understand and change, for example to add
 features or to change the language.
 
-Syntax
-------
+Husky syntax
+------------
 
 Husky syntax follows the usual syntax of arithmetic expressions with functions.
 Functions are applied to one or more parenthesized arguments:
@@ -286,10 +301,10 @@ Examples
     > Node(3, Node(1, Leaf, Leaf), Node(4, Leaf, Leaf)).
     Node(3, Node(1, Leaf, Leaf), Node(4, Leaf, Leaf)) :: BinTree(num)
 
-Built-in operators
-------------------
+Functions
+---------
 
-The built-in operators are:
+The built-in operators and functions:
 
     - x     unary minus (can also use 'neg' for unary minus)
     x + y       addition
@@ -406,8 +421,8 @@ For example:
 
     [ (a,b) | a <- 1..5; odd(a); b <- 1..a; a mod b = 0 ].
 
-Macro expansion
----------------
+Macros
+------
 
 Macros are defined with `==` to serve as shorthands for expressions and types:
 
@@ -447,8 +462,8 @@ The monad `do` operator (defined in monads.sky):
 Note that macros do not evaluate arguments!  Only syntactical structures are
 pattern matched.
 
-Additional syntactic constructs
--------------------------------
+Special constructs
+------------------
 
     if b then x else y      a conditional expression
 
@@ -466,25 +481,6 @@ For example:
     test := (let f := ^(2); start := 1; end := 10 in map(f, start..end)).
 
     case n of (1 -> "one"; 2 -> "two"; 3 -> "three")
-
-Some notes on operator syntax
------------------------------
-
-There are some cases where we need to be cautious about infix and prefix
-operators in juxtaposed positions.  There must be a space in between, otherwise
-the Prolog system is not able to parse the expression.  For example:
-
-    x\/\y           should be written         x\/ \y
-    x+#l            should be written         x+ #l
-    x*-y            should be written         x* -y
-    x<-y            should be written         x< -y
-
-Parenthesization follows the Prolog syntax, so `f(x,y)` works, but `f(x)(y)`
-causes a syntax error.  Instead, use colons, e.g. `f:x:y` or a mixed form such
-as `f(x):y`.
-
-There cannot be a space after the dot (`.`) operator, otherwise the system
-considers the input line has ended. In this case, use parenthesis.
 
 Lambdas
 -------
@@ -567,297 +563,27 @@ Gotchas
   which displays "abc" even though `y` is not used, because tuple members are
   evaluated.
 
-Pre-defined prelude functions
------------------------------
-
-    1102 prefix (let).
-    1104 infixr (in).
-
-    (let def; defs in val) == (let def in let defs in val).
-    (let def       in val) == (val where def).
-
-    %	the 'case' construct expands into a lambda application
-
-    960 prefix (case).
-    962 infix (of).
-
-    case a of b == b:a.
-
-    %	the 'if-then-else' construct expands into 'case'
-
-    962 prefix (if).
-    964 infixl (then).
-    964 infixl (else).
-
-    a then if b then c else d == a then (if b then c else d).
-    a else if b then c else d == a else (if b then c else d).
-           if a then b else c == case a of (true -> b; false -> c).
-
-    %	list comprehensions expand into map, filter, and concat
-
-    1050 infix (<-).
-
-    [ f | x <- xs; p; y <- ys; r ] == concat(map(x -> [ f | y <- ys; r ], filter(x -> p, xs))).
-    [ f | x <- xs; p; y <- ys    ] == concat(map(x -> [ f | y <- ys    ], filter(x -> p, xs))).
-
-    [ f | x <- xs; y <- ys; r ] == concat(map(x -> [ f | y <- ys; r ], xs)).
-    [ f | x <- xs; y <- ys    ] == concat(map(x -> [ f | y <- ys    ], xs)).
-
-    [ f | x <- xs; p; q; r ] == [ f | x <- xs; p /\ q; r ].
-    [ f | x <- xs; p; q    ] == [ f | x <- xs; p /\ q    ].
-
-    [ x | x <- xs; p ] == filter(x -> p, xs).
-    [ f | x <- xs; p ] == map(x -> f, filter(x -> p, xs)).
-
-    [ x | x <- xs ] == xs.
-    [ f | x <- xs ] == map(x -> f, xs).
-
-    %	list length
-
-    110 prefix (#).
-
-    # []   := 0;
-    # x.xs := 1 + # xs.
-
-    %	list element access by index from 1
-
-    110 infixl (?).
-
-    x.xs ? 1 := x;
-    x.xs ? n := xs ? (n-1).
-
-    %	list membership
-
-    700 infix (is_in).
-
-    x is_in   [] := false;
-    x is_in y.ys := if x = y then true else x is_in ys.
-
-    700 infix (not_in).
-
-    x not_in   [] := true;
-    x not_in y.ys := if x = y then false else x not_in ys.
-
-    %	init of a list
-
-    init([])   := nil;
-    init(x.xs) := if xs = [] then [] else x.init(xs).
-
-    %	last of a list
-
-    last([])   := nil;
-    last(x.xs) := if xs = [] then x else last(xs).
-
-    %	list concatenation
-
-    950 infixr (++).
-
-    []   ++ ys := ys;
-    x.xs ++ ys := x.(xs ++ ys).
-
-    %	list subtraction
-
-    950 infix (\\).
-
-    []   \\ ys := [];
-    x.xs \\ ys := if x is_in ys then xs \\ ys else x.(xs \\ ys).
-
-    %	first and second tuple elements
-
-    fst((x, y)) := x.
-
-    snd((x, y)) := y.
-
-    %	even and odd
-
-    even(x) := x mod 2 = 0.
-
-    odd(x) := x mod 2 <> 0.
-
-    %	GCD
-
-    gcd(0, b) := b;
-    gcd(a, b) := gcd(b mod a, a).
-
-    %	LCM
-
-    lcm(a, b) := a * b / gcd(a, b).
-
-    %	factorial
-
-    fac(0) := 1;
-    fac(n) := n * fac(n - 1).
-
-    %	Fibonacci
-
-    fib1(1, a, b) := a + b;
-    fib1(n, a, b) := fib1(n - 1, b, a + b).
-
-    fib(0) := 0;
-    fib(1) := 1;
-    fib(n) := fib1(n - 1, 0, 1).
-
-    %	map
-
-    map(f,   []) := [];
-    map(f, x.xs) := f(x).map(f, xs).
-
-    %	filter
-
-    filter(p,   []) := [];
-    filter(p, x.xs) := if p(x) then x.filter(p, xs) else filter(p, xs).
-
-    %	left and right fold
-
-    foldl((** -> * -> **), **, [*]) :: ** .
-
-    foldl(f, a,   []) := a;
-    foldl(f, a, x.xs) := foldl(f, f(a, x), xs).
-
-    foldr((* -> ** -> **), **, [*]) :: ** .
-
-    foldr(f, a,   []) := a;
-    foldr(f, a, x.xs) := f(x, foldr(f, a, xs)).
-
-    foldl1((* -> * -> *), [*]) :: * .
-
-    foldl1(f,   []) := nil;
-    foldl1(f, x.xs) := foldl(f, x, xs).
-
-    foldr1((* -> * -> *), [*]) :: * .
-
-    foldr1(f,   []) := nil;
-    foldr1(f, x.xs) := if xs = [] then x else f(x, foldr1(f, xs)).
-
-    %	left and right scan
-
-    scanl((** -> * -> **), **, [*]) :: [**].
-
-    scanl(f, a,   []) := [a];
-    scanl(f, a, x.xs) := a.scanl(f, f(a, x), xs).
-
-    scanr((* -> ** -> **), **, [*]) :: [**].
-
-    scanr(f, a,   []) := [a];
-    scanr(f, a, x.xs) := f(x, hd(ys)).ys where ys := scanr(f, a, xs).
-
-    %	all and any
-
-    all(_,   []) := true;
-    all(p, x.xs) := if p(x) then all(p, xs) else false.
-
-    any(_,   []) := false;
-    any(p, x.xs) := if p(x) then true else any(p, xs).
-
-    %	concat list of lists
-
-    concat := foldr(++, []).
-
-    %	zip two lists
-
-    zip([],     ys) := [];
-    zip(x.xs,   []) := [];
-    zip(x.xs, y.ys) := (x,y).zip(xs, ys).
-
-    %	unzip tuple list
-
-    unzip([])    := ([],[]);
-    unzip(p.xys) := (x.xs,y.ys) where (x,y) := p where (xs,ys) := unzip(xys).
-
-    %	zip with operator
-
-    zipwith(f, [],     ys) := [];
-    zipwith(f, x.xs,   []) := [];
-    zipwith(f, x.xs, y.ys) := f(x, y).zipwith(f, xs, ys).
-
-    %	until applies f to x until p(x) holds
-
-    until(p, f, x) := if p(x) then x else until(p, f, f(x)).
-
-    %	iterate returns list of repeated application of f to x
-
-    iterate(f, x) := x.iterate(f, f(x)).
-
-    %	from gives an integer list from a given start integer
-
-    from(n) := n.from(n + 1).
-
-    %	repeat value in list
-
-    repeat(x) := x.repeat(x).
-
-    %	replicate value in list n times
-
-    replicate(0, _) := [];
-    replicate(n, x) := x.replicate(n - 1, x).
-
-    %	cycle list
-
-    cycle(xs) := xs ++ cycle(xs).
-
-    %	drop n elements from a list
-
-    drop(0,   xs) := xs;
-    drop(n,   []) := [];
-    drop(n, x.xs) := drop(n - 1, xs).
-
-    %	take n elements from a list
-
-    take(0,   xs) := [];
-    take(n,   []) := [];
-    take(n, x.xs) := x.take(n - 1, xs).
-
-    %	drop elements from list while condition on element is true
-
-    dropwhile(p,   []) := [];
-    dropwhile(p, x.xs) := if p(x) then dropwhile(p, xs) else x.xs.
-
-    %	take elements from list while condition on element is true
-
-    takewhile(p,   []) := [];
-    takewhile(p, x.xs) := if p(x) then x.takewhile(p, xs) else [].
-
-    %	interval a..b generates a list of integers in range a to b
-
-    650 infix (..).
-
-    a .. b := if a <= b then take(b - a + 1, from(a)) else [].
-
-    %	list reversal
-
-    reverse1(ys,   []) := ys;
-    reverse1(ys, x.xs) := reverse1(x.ys, xs).
-
-    reverse(xs) := reverse1([], xs).
-
-    %	function composition (f @ g reads "f after g")
-
-    955 infixr (@).
-
-    (f @ g):x := f(g(x)).
-
-    %	twiddle operands, note the use of f(x) as a formal argument
-
-    twiddle(f(x), y) := f(x, y).
-
-    %	flip operands
-
-    flip(f, x, y) := f(y, x).
-
-    %	curry
-
-    curry(f, x, y) := f((x,y)).
-
-    %	uncurry
-
-    uncurry(f, (x,y)) := f(x, y).
+- There must be a space between operators, otherwise the system is not able to
+  parse the expression.  For example:
+
+      x\/\y           should be written         x\/ \y
+      x+#l            should be written         x+ #l
+      x*-y            should be written         x* -y
+      x<-y            should be written         x< -y
+
+- Parenthesization follows the Prolog syntax, so `f(x,y)` works, but `f(x)(y)`
+  causes a syntax error.  Instead, use colons, e.g. `f:x:y` or a mixed form
+  such as `f(x):y`.
+
+- There cannot be a space after the dot (`.`) operator, otherwise the system
+  considers the input line has ended. In this case, use parenthesis.
 
 Installation
 ------------
 
 Install SWI-Prolog 8.2.1 or greater from <https://www.swi-prolog.org>.
 
-Then clone Husky wit git:
+Then clone Husky with git:
 
     $ git clone https://github.com/Genivia/husky
 
