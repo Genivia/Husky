@@ -95,7 +95,7 @@ program.  Input may span one or more lines and should end with a period (`.`).
     3 :: num
 
     > x^2 where x := sin(1)-2.
-    1.34219 :: num
+    1.3421894790419853 :: num
 
     > true /\ false \/ true.
     true :: bool
@@ -112,8 +112,11 @@ program.  Input may span one or more lines and should end with a period (`.`).
     > x->x+1.
     $0->$0+1 :: num->num
 
-    > x->x.
-    $0->$0 :: $0->$0
+    > f where f(x) := x+1.
+    $0->$0+1 :: num->num
+
+    > map(f, [1,2,3]) where f(x) := x+1.
+    [2,3,4] :: [num]
 
     > zip([1, 2, 3], [true, true, false]).
     [(1, true), (2, true), (3, false)] :: [(num, bool)]
@@ -121,7 +124,7 @@ program.  Input may span one or more lines and should end with a period (`.`).
 Type variables and formal arguments of functions and lambdas are internally
 anonymized and replaced by `$i` where `i` is an integer.
 
-Many functions and operators are pre-defined in Husky, either as built-ins or
+Many functions and operators are predefined in Husky, either as built-ins or
 as prelude functions, see [Functions](#functions).
 
 In Husky, `v->b` is a lambda (abstraction) with argument `v` and body
@@ -154,8 +157,8 @@ For example:
     hypotenuse(x, y) := sqrt(x^2 + y^2).
 
 Definitions of functions can span more than one `LHS := RHS` pair in which the
-definitions should be separated with a semicolon (`;`), for example when
-pattern arguments are used for function specialization:
+definitions should be separated with a semicolon (`;`).  This allows you to
+define pattern arguments for function specialization:
 
     fact(0) := 1;
     fact(n) := n * fact(n - 1).
@@ -163,7 +166,7 @@ pattern arguments are used for function specialization:
 Multiple definitions of a function typically have constants and data structures
 as arguments for which the function has a specialized function body.
 
-A wildcard formal argument `_` is allowed.  For example to define the `const`
+A wildcard formal argument `_` is permitted.  For example to define the `const`
 function:
 
     const(x, _) := x.
@@ -171,9 +174,9 @@ function:
 Types
 -----
 
-Types are automatically inferred, like Haskell.  Types can be explicitly
-associated with definitions.  New named types and parametric types can be
-defined.
+Types are automatically inferred, like Haskell.  Types can also be explicitly
+associated with definitions using the `::` operator.  New named types and
+parametric types can be defined.
 
 Husky has three built-in atomic types:
 
@@ -306,12 +309,12 @@ Functions
 
 Built-in operators and functions are defined in prelude.sky:
 
-    - x         unary minus (can also use 'neg' for unary minus)
+    - x         unary minus (can also use 'neg' for unary minus, e.g. for currying)
     x + y       addition
-    x - y       subtraction (use 'neg' for unary minus)
+    x - y       subtraction
     x * y       multiplication
     x / y       division
-    x rdiv y    rational division
+    x rdiv y    rational division with "infinite" precision
     x div y     integer division
     x mod y     modulo
     x ^ y       power
@@ -330,7 +333,7 @@ Built-in operators and functions are defined in prelude.sky:
     lcm(x, y)   LCM
     fac(x)      factorial
     fib(x)      Fibonacci
-    id(x)       identity (=x)
+    id(x)       identity (returns x)
     abs(x)      absolute value
     sin(x)      sine
     cos(x)      cosine
@@ -341,8 +344,8 @@ Built-in operators and functions are defined in prelude.sky:
     exp(x)      e^x
     log(x)      natural logarithm (nil when x<0)
     sqrt(x)     root (nil when x<0)
-    x // y      string concatentation
-    (x,y)       tuple (note: tuple constructors are strict and NOT lazy)
+    x // y      string concatenation
+    (x,y)       tuple (note: tuple constructors are strict, not lazy)
     x.xs        a list with head x and tail xs (list constructors are lazy)
     [x|xs]      same as above: a list with head x and tail xs
     # xs        list length
@@ -389,8 +392,8 @@ Built-in operators and functions are defined in prelude.sky:
     iterate     iterate(f, x) = [x, f(x), f(f(x)), f(f(f(x))), ... ]
     from        from(n) = [n, n+1, n+2, ...]
     repeat      repeat(x) produces [x,x,x,...]
-    replicate   replicate(n, x) generates list that replicates n x's
-    cycle       cycle(xs) creates cyclic list xs ++ xs ++ ...
+    replicate   replicate(n, x) generates list of n x's
+    cycle       cycle(xs) generates cyclic list xs ++ xs ++ ...
     drop        drop(n, xs) drops n elements from xs
     take        take(n, xs) takes n elements from xs
     dropwhile   dropwhile(p, xs) drops first elements fulfilling p from xs
@@ -459,8 +462,9 @@ The monad `do` operator (defined in monads.sky):
     do(x <- y; z) == y >>= (x -> do(z)).
     do(z) == z.
 
-Note that macros do not evaluate arguments!  Only syntactical structures are
-pattern matched.
+Note that macros do not evaluate arguments!  Only syntactical structures can be
+pattern matched.  New syntax can be introduced by declaring prefix, infix, and
+postfix opertors, see [Commands](#commands).
 
 Special constructs
 ------------------
@@ -487,7 +491,7 @@ Lambdas
 
 A lamba (abstraction) is written as `v->b`.  When a lambda has alternatives as
 arguments, i.e. a set of argument choices such as constants and partial data
-structures then the alternatives should be separated by semicolons (`;`).
+structures, then the alternatives should be separated by semicolons (`;`).
 
 Functions with alternative formal arguments are automatically translated to the
 corresponding lambda abstractions.
@@ -510,7 +514,7 @@ Commands
     load "file".            load file
     save "file".            save listing to file
     :- Goal.                execute Prolog Goal
-    remove name.            removes name from definitions
+    remove name.            remove name from definitions
     prefix (op).            declare prefix operator op
     postfix (op).           declare postfix operator op
     infix (op).             declare non-associative infix operator op
@@ -545,7 +549,7 @@ Gotchas
               where f(BinTree(l, r)) := l
               where g(BinTree(l, r)) := r.
 
-- The scope of the `where` construct is limited to the left-hand side.
+- The scope of the `where` construct is limited to its left-hand side.
   Therefore, it does not support recursive definitions:
 
       BAD:
@@ -592,7 +596,6 @@ Run `swipl` then load Husky and run the `husky` interpreter:
     $ swipl
     ?- [husky].
     :- husky.
-    > 
 
 After starting Husky, load any one of the example .sky files with:
 
