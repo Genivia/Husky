@@ -18,8 +18,8 @@ Lazy functional programming with Husky
 
 Husky is a lazy functional language similar to Haskell.  Husky implements a
 Hindley-Milner-style parametric polymorphic type system, higher-order
-functions, argument pattern matching for function specialization, macros,
-list comprehensions, and monads.
+functions, argument pattern matching for function specialization, currying,
+macros, list comprehensions, and monads.
 
 Husky uses NOR (normal order reduction), WHNF (weak head normal form), sharing
 (an important lazy evaluation optimization), and lazy constructors to create
@@ -86,29 +86,6 @@ Functions are applied to one or more parenthesized arguments:
 Values are Booleans `true` and `false`, numbers, strings (quoted with `"`),
 lists written with `[` and `]` brackets, and arbitrary data structures.
 
-Many functions and operators are pre-defined in Husky, either as built-ins or
-as prelude functions.  See further below for the list of pre-defined functions.
-
-In Husky, `v->b` is a lambda (abstraction) with argument `v` and body
-expression `b`.  Applications of lambdas are written with a colon (`:`), for
-example `(v->v+1):3` applies the lambda `v->v+1` to the value `3` giving `4`.
-When applying named functions the usual parenthesized form can be used, for
-example `f(3)` to apply `f` to the value `3`.  Also `f:3` is permitted.
-
-Currying of functions and operators is supported.  For example, addition can be
-written in functional form `+(x,y)` and `(+):x:y` and even `+(x):y`.  These are
-all different representations of the same expression.  This makes Currying
-intuitive, for example `+(1)` is the increment function, `*(2)` doubles, and
-`/(1)` inverts (note the parameter placement order in this case!).
-
-Lists in Husky are written with brackets, for example`[]` and `[1,2]`.  The
-special form `[x|xs]` represents a list with head expression `x` and tail
-expression `xs`.  The dot notation `x.xs` is also allowed to represent a list
-with head `x` and tail `xs`, where `.` is the list constructor function.
-
-Definitions and expressions entered at the command prompt shoud be terminated
-by a period (`.`).
-
 At the Husky prompt you can enter expressions which are evaluated and the
 answer is returned together with its type.  Global type declarations and
 function definitions entered at the command prompt are stored with the program.
@@ -142,6 +119,29 @@ function definitions entered at the command prompt are stored with the program.
 
 Type variables and formal arguments of functions and lambdas are internally
 anonymized and replaced by `$i` where `i` is an integer.
+
+Many functions and operators are pre-defined in Husky, either as built-ins or
+as prelude functions, see [Functions](#functions).
+
+In Husky, `v->b` is a lambda (abstraction) with argument `v` and body
+expression `b`.  Applications of lambdas are written with a colon (`:`), for
+example `(v->v+1):3` applies the lambda `v->v+1` to the value `3` giving `4`.
+When applying named functions the usual parenthesized form can be used, for
+example `f(3)` to apply `f` to the value `3`.  Also `f:3` is permitted.
+
+Currying of functions and operators is supported.  For example, addition can be
+written in functional form `+(x,y)` and `(+):x:y` and even `+(x):y`.  These are
+all different representations of the same expression.  This makes Currying
+intuitive, for example `+(1)` is the increment function, `*(2)` doubles, and
+`/(1)` inverts (note the parameter placement order in this case!).
+
+Lists in Husky are written with brackets, for example`[]` and `[1,2]`.  The
+special form `[x|xs]` represents a list with head expression `x` and tail
+expression `xs`.  The dot notation `x.xs` is also allowed to represent a list
+with head `x` and tail `xs`, where `.` is the list constructor function.
+
+Definitions and expressions entered at the command prompt shoud be terminated
+by a period (`.`).
 
 Definitions
 -----------
@@ -304,9 +304,9 @@ Examples
 Functions
 ---------
 
-The built-in operators and functions:
+Built-in operators and functions are defined in prelude.sky:
 
-    - x     unary minus (can also use 'neg' for unary minus)
+    - x         unary minus (can also use 'neg' for unary minus)
     x + y       addition
     x - y       subtraction (use 'neg' for unary minus)
     x * y       multiplication
