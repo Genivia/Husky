@@ -1,0 +1,289 @@
+%	prelude.sky
+%
+%	Predefined Husky functions by Robert A. van Engelen
+
+pi := 3.141592653589793.
+
+%	the 'let' construct expands into nested 'where'
+
+1102 prefix (let).
+1104 infixr (in).
+
+(let def; defs in val) == (let def in let defs in val).
+(let def       in val) == (val where def).
+
+%	the 'case' construct expands into a lambda application
+
+960 prefix (case).
+962 infix (of).
+
+case a of b == b:a.
+
+%	the 'if-then-else' construct expands into 'case'
+
+962 prefix (if).
+964 infixl (then).
+964 infixl (else).
+
+a then if b then c else d == a then (if b then c else d).
+a else if b then c else d == a else (if b then c else d).
+       if a then b else c == case a of (true -> b; false -> c).
+
+%	list comprehensions expand into map, filter, and concat
+
+1050 infix (<-).
+
+[ f | x <- xs; p; y <- ys; r ] == concat(map(x -> [ f | y <- ys; r ], filter(x -> p, xs))).
+[ f | x <- xs; p; y <- ys    ] == concat(map(x -> [ f | y <- ys    ], filter(x -> p, xs))).
+
+[ f | x <- xs; y <- ys; r ] == concat(map(x -> [ f | y <- ys; r ], xs)).
+[ f | x <- xs; y <- ys    ] == concat(map(x -> [ f | y <- ys    ], xs)).
+
+[ f | x <- xs; p; q; r ] == [ f | x <- xs; p /\ q; r ].
+[ f | x <- xs; p; q    ] == [ f | x <- xs; p /\ q    ].
+
+[ x | x <- xs; p ] == filter(x -> p, xs).
+[ f | x <- xs; p ] == map(x -> f, filter(x -> p, xs)).
+
+[ x | x <- xs ] == xs.
+[ f | x <- xs ] == map(x -> f, xs).
+
+%	list length
+
+110 prefix (#).
+
+# []   := 0;
+# x.xs := 1 + # xs.
+
+%	list element access by index from 1
+
+110 infixl (?).
+
+x.xs ? 1 := x;
+x.xs ? n := xs ? (n-1).
+
+%	list membership
+
+700 infix (is_in).
+
+x is_in   [] := false;
+x is_in y.ys := if x = y then true else x is_in ys.
+
+700 infix (not_in).
+
+x not_in   [] := true;
+x not_in y.ys := if x = y then false else x not_in ys.
+
+%	init of a list
+
+init([])   := nil;
+init(x.xs) := if xs = [] then [] else x.init(xs).
+
+%	last of a list
+
+last([])   := nil;
+last(x.xs) := if xs = [] then x else last(xs).
+
+%	list concatenation
+
+950 infixr (++).
+
+[]   ++ ys := ys;
+x.xs ++ ys := x.(xs ++ ys).
+
+%	list subtraction
+
+950 infix (\\).
+
+[]   \\ ys := [];
+x.xs \\ ys := if x is_in ys then xs \\ ys else x.(xs \\ ys).
+
+%	first and second tuple elements
+
+fst((x, y)) := x.
+
+snd((x, y)) := y.
+
+%	even and odd
+
+even(x) := x mod 2 = 0.
+
+odd(x) := x mod 2 <> 0.
+
+%	GCD
+
+gcd(0, b) := b;
+gcd(a, b) := gcd(b mod a, a).
+
+%	LCM
+
+lcm(a, b) := a * b / gcd(a, b).
+
+%	factorial
+
+fac(0) := 1;
+fac(n) := n * fac(n - 1).
+
+%	Fibonacci
+
+fib1(1, a, b) := a + b;
+fib1(n, a, b) := fib1(n - 1, b, a + b).
+
+fib(0) := 0;
+fib(1) := 1;
+fib(n) := fib1(n - 1, 0, 1).
+
+%	map
+
+map(f,   []) := [];
+map(f, x.xs) := f(x).map(f, xs).
+
+%	filter
+
+filter(p,   []) := [];
+filter(p, x.xs) := if p(x) then x.filter(p, xs) else filter(p, xs).
+
+%	left and right fold
+
+foldl((** -> * -> **), **, [*]) :: ** .
+
+foldl(f, a,   []) := a;
+foldl(f, a, x.xs) := foldl(f, f(a, x), xs).
+
+foldr((* -> ** -> **), **, [*]) :: ** .
+
+foldr(f, a,   []) := a;
+foldr(f, a, x.xs) := f(x, foldr(f, a, xs)).
+
+foldl1((* -> * -> *), [*]) :: * .
+
+foldl1(f,   []) := nil;
+foldl1(f, x.xs) := foldl(f, x, xs).
+
+foldr1((* -> * -> *), [*]) :: * .
+
+foldr1(f,   []) := nil;
+foldr1(f, x.xs) := if xs = [] then x else f(x, foldr1(f, xs)).
+
+%	left and right scan
+
+scanl((** -> * -> **), **, [*]) :: [**].
+
+scanl(f, a,   []) := [a];
+scanl(f, a, x.xs) := a.scanl(f, f(a, x), xs).
+
+scanr((* -> ** -> **), **, [*]) :: [**].
+
+scanr(f, a,   []) := [a];
+scanr(f, a, x.xs) := f(x, hd(ys)).ys where ys := scanr(f, a, xs).
+
+%	all and any
+
+all(_,   []) := true;
+all(p, x.xs) := if p(x) then all(p, xs) else false.
+
+any(_,   []) := false;
+any(p, x.xs) := if p(x) then true else any(p, xs).
+
+%	concat list of lists
+
+concat := foldr(++, []).
+
+%	zip two lists
+
+zip([],     ys) := [];
+zip(x.xs,   []) := [];
+zip(x.xs, y.ys) := (x,y).zip(xs, ys).
+
+%	unzip tuple list
+
+unzip([])    := ([],[]);
+unzip(p.xys) := (x.xs,y.ys) where (x,y) := p where (xs,ys) := unzip(xys).
+
+%	zip with operator
+
+zipwith(f, [],     ys) := [];
+zipwith(f, x.xs,   []) := [];
+zipwith(f, x.xs, y.ys) := f(x, y).zipwith(f, xs, ys).
+
+%	until applies f to x until p(x) holds
+
+until(p, f, x) := if p(x) then x else until(p, f, f(x)).
+
+%	iterate returns list of repeated application of f to x
+
+iterate(f, x) := x.iterate(f, f(x)).
+
+%	from gives an integer list from a given start integer
+
+from(n) := n.from(n + 1).
+
+%	repeat value in list
+
+repeat(x) := x.repeat(x).
+
+%	replicate value in list n times
+
+replicate(0, _) := [];
+replicate(n, x) := x.replicate(n - 1, x).
+
+%	cycle list
+
+cycle(xs) := xs ++ cycle(xs).
+
+%	drop n elements from a list
+
+drop(0,   xs) := xs;
+drop(n,   []) := [];
+drop(n, x.xs) := drop(n - 1, xs).
+
+%	take n elements from a list
+
+take(0,   xs) := [];
+take(n,   []) := [];
+take(n, x.xs) := x.take(n - 1, xs).
+
+%	drop elements from list while condition on element is true
+
+dropwhile(p,   []) := [];
+dropwhile(p, x.xs) := if p(x) then dropwhile(p, xs) else x.xs.
+
+%	take elements from list while condition on element is true
+
+takewhile(p,   []) := [];
+takewhile(p, x.xs) := if p(x) then x.takewhile(p, xs) else [].
+
+%	interval a..b generates a list of integers in range a to b
+
+650 infix (..).
+
+a .. b := if a <= b then take(b - a + 1, from(a)) else [].
+
+%	list reversal
+
+reverse1(ys,   []) := ys;
+reverse1(ys, x.xs) := reverse1(x.ys, xs).
+
+reverse(xs) := reverse1([], xs).
+
+%	function composition (f @ g reads "f after g")
+
+955 infixr (@).
+
+(f @ g):x := f(g(x)).
+
+%	twiddle operands, note the use of f(x) as a formal argument
+
+twiddle(f(x), y) := f(x, y).
+
+%	flip operands
+
+flip(f, x, y) := f(y, x).
+
+%	curry
+
+curry(f, x, y) := f((x,y)).
+
+%	uncurry
+
+uncurry(f, (x,y)) := f(x, y).

@@ -1,0 +1,26 @@
+%	clientserver.sky
+%
+%	Client-server stream example based on Haskell tutorial example (without
+%	lazy pattern syntactic sugar) http://haskell.org/tutorial/patterns.html
+
+start := 0.
+
+next(response) := response.
+
+process(request) := request + 1.
+
+client(init, responses) := init.client(next(response), rest)
+			where response := hd(responses)
+			where rest := tl(responses).
+
+server(requests) := process(request).server(rest)
+			where request  := hd(requests)
+			where rest := tl(requests).
+
+responses :: [num].
+
+requests := client(start, responses).
+
+responses := server(requests).
+
+test := take(10, requests).

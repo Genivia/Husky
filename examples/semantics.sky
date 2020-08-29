@@ -1,0 +1,92 @@
+%	semantics.sky
+%
+%	Denotational semantics
+%
+%	Examples:
+%	> load "semantics".
+%	> S(Program1).
+%	> S(Program1, empty).
+%	> S(Program1, empty, a).
+%	> S(Program2, empty, a).
+%	> S(Program2, empty, b).
+%	> S(Program3, empty).
+%	> S(Program3, empty, b).
+
+%	Declare Variables, Expressions, and Statements abstract syntax as types
+
+Variable   :: type.
+Expression :: type.
+Statement  :: type.
+
+%	Expression abstract syntax
+
+Val(num)                    :: Expression.
+Var(Variable)               :: Expression.
+Add(Expression, Expression) :: Expression.
+Mul(Expression, Expression) :: Expression.
+
+%	Statement abstract syntax
+
+Assign(Variable, Expression)         :: Statement.
+Sequence(Statement, Statement)       :: Statement.
+If(Expression, Statement, Statement) :: Statement.
+While(Expression, Statement)         :: Statement.
+
+%	The machine state is a memory mapping from variable names to values
+
+State == Variable -> num.
+
+empty :: State.
+empty := v -> nil.
+
+update(State, Variable, num) :: State.
+update(state, var, val) := v -> if v = var then val else state(v).
+
+%	Map (evaluate) expressions to values
+
+E(Var(v), state)    := state(v);
+E(Val(n), state)    := n;
+E(Add(x, y), state) := E(x, state) + E(y, state);
+E(Mul(x, y), state) := E(x, state) * E(y, state).
+
+%	Map (execute) statements to state transformers
+
+S(Assign(v, x), state)   := update(state, v, E(x, state));
+S(Sequence(s, t), state) := S(t, S(s, state));
+S(If(x, s, t), state)    := S(if E(x, state) <> 0 then s else t, state);
+S(While(x, s), state)    := if E(x, state) <> 0 then fix(while, state) else state
+			    where while(w, st) := if E(x, st) <> 0 then w(S(s, st)) else st.
+
+%	Example programs
+
+a :: Variable.
+b :: Variable.
+
+%	Compute a = 0 and b = a+1
+
+Program1 := Sequence(
+		Assign(a, Val(0)),
+		Assign(b, Add(Var(a), Val(1)))).
+
+%	Compute a = 0 and b = (a+1)<>0 ? 2 : 3
+
+Program2 := Sequence(
+		Assign(a, Val(0)),
+		If(Add(Var(a), Val(1)),
+			Assign(b, Val(2)),
+			Assign(b, Val(3)))).
+
+%	Compute b = factorial(10)
+
+Program3 := Sequence(
+		Sequence(
+			Assign(a, Val(10)),
+			Assign(b, Val(1))),
+		While(Var(a),
+			Sequence(
+				Assign(b, Mul(Var(a), Var(b))),
+				Assign(a, Add(Var(a), Val(-1)))))).
+
+%	Run it
+
+"Program3 computes 10! = "//str(result) where result := S(Program3, empty, b).

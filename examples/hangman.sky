@@ -1,0 +1,42 @@
+%	hangman.sky
+%
+%	Simple hangman game
+%
+%	Usage:
+%	> load "hangman".
+%	> game.
+
+tab := 9.
+newline := 10.
+hyphen := 0'-.
+
+turn(word, guess, c.input) :=
+	% display the typed letter c, tab, ---c--, nl, and the rest of the turns
+	[c] ++ [tab] ++ reveal ++ [newline] ++ rest
+	% rest is the next turn, unless we've guessed them all
+	where rest    := if hyphen is_in reveal 
+	                 then turn(word, c.guess, input)
+			 else []
+	% the letters c in the word ---c-- we guessed
+	where reveal  := map(dash, word)
+	where dash(w) := if w is_in c.guess
+	                 then w
+			 else hyphen.
+
+hangman(word) :=
+	snd:
+	( % getting started
+	  write("Enter a sequence of letters to guess the " //
+	      str(# s2ascii(word)) //
+	      "-letter word" //
+	      ascii2s([newline]))
+	,
+	  % print all chars from each turn with putc
+	  # map(putc, turn(s2ascii(word), [], input)
+	  % generate input from the tty with getc
+	  where input := map(x->getc, from(1)))
+	).
+
+dictionary := ["apple", "border", "lottery", "platypus", "xenophobe", "zoological"].
+
+game := foldl(+, 0, map(hangman, dictionary)).

@@ -1,0 +1,25 @@
+%	palindrome.sky
+
+%	Lower/upper case
+
+tolower(c) := if c >= 0'A /\ c <= 0'Z then c - 0'A + 0'a else c.
+
+toupper(c) := if c >= 0'a /\ c <= 0'z then c - 0'a + 0'A else c.
+
+%	Anagrams
+%	> anagram("Madam i'm adam.").
+
+palindrome(s) := take(# as div 2, as) = reverse(drop((# as + 1) div 2, as))
+                 where as := filter(letter, map(tolower, s2ascii(s)))
+                             where letter(l) := l >= 0'a /\ l <= 0'z.
+
+%	Question/answer
+
+run := write("Enter a sentence: ") //
+       ( let sentence := read in
+         if palindrome(sentence)
+         then writeln(sentence // " is a palindrome.")
+         else writeln(sentence // " is not a palindrome.")
+       ) //
+       run.
+

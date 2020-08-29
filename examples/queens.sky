@@ -1,0 +1,22 @@
+%	queens.sky
+%
+%	8-queens problem
+%
+%	Usage:
+%	> solve.
+
+check((m, n), (i, j)) := j = n \/ i+j = m+n \/ i-j = m-n.
+
+safe(p, n) := filter(check((m+1, n)), zip(1..m, p)) = []
+	      where m := #p.
+
+place([])   := [];
+place(p.ps) := map(affix, filter(safe(p), 1..8)) ++ place(ps)
+	       where affix(n) := p ++ [n].
+
+queens(0) := [[]];
+queens(n) := place(queens(n-1)).
+
+solve := hd(queens(8)).
+
+writeln("Type > solve. to run the demo.").

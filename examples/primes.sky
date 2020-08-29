@@ -1,0 +1,23 @@
+%	primes.sky
+%
+%	Sieve of Eratosthenes
+%
+%	Examples:
+%	> load "primes".
+%	> take(10, primes).
+%	> takewhile(>(100), primes).
+%	> prime(100).
+
+%	The following is based on an example in Miranda's documentation:
+
+sieve1(p.xs) := filter(indivisible, xs)
+                where indivisible(x) := x mod p <> 0.
+
+primes := map(hd, iterate(sieve1, from(2))).
+
+%	Here is another shorter definition that is more memory efficient:
+
+sieve(p.xs) := p.sieve(filter(indivisible, xs))
+               where indivisible(x) := x mod p <> 0.
+
+prime(n) := sieve(from(2)) ? n.

@@ -1,0 +1,23 @@
+%	qsort.sky
+
+%	Quicksort using list comprehensions
+
+qsort([])   := [];
+qsort(p.as) := qsort([a | a <- as; a <= p]) ++ [p] ++ qsort([a | a <- as; a > p]).
+
+%	Unique quicksort - sort without duplicates
+
+usort([])   := [];
+usort(p.as) := usort([a | a <- as; a < p]) ++ [p] ++ usort([a | a <- as; a > p]).
+
+%	An alternative quicksort without list comprehensions
+
+partition(p,   []) := ([], []);
+partition(p, x.xs) := if x < p
+		      then ([x] ++ fst(part), snd(part))
+		      else (fst(part), [x] ++ snd(part))
+		      where part := partition(p, xs).
+
+qsort2([])   := [];
+qsort2(x.xs) := qsort2(fst(part)) ++ [x] ++ qsort2(snd(part))
+	        where part := partition(x, xs).

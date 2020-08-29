@@ -1,0 +1,83 @@
+%	btree.sky
+%
+%	Binary trees
+
+Btree :: type.
+
+%	leaf of a btree
+
+Leaf :: Btree(*).
+
+%	node of a btree
+
+Node(*, Btree(*), Btree(*)) :: Btree(*).
+
+%	Tree operations
+
+minval(Leaf, k) := k;
+minval(Node(m, left, _), _) := minval(left, m).
+
+maxval(Leaf, k) := k;
+maxval(Node(m, _, right), _) := maxval(right, m).
+
+insert(n, Leaf)                 := Node(n, Leaf, Leaf);
+insert(n, Node(m, left, right)) :=
+	if	n = m
+	then	Node(m, left, right)
+	else if	n < m
+	then	Node(m, insert(n, left), right)
+	else	Node(m, left, insert(n, right)).
+
+delete(_, Leaf)                 := Leaf;
+delete(n, Node(m, left, right)) :=
+	if	n = m
+	then	delnode(left, right)
+	else if n < m
+	then	Node(m, delete(n, left), right)
+	else	Node(m, left, delete(n, right))
+	where ( delnode(Leaf, Leaf) := Leaf;
+		delnode(Leaf, tree) := tree;
+		delnode(tree, Leaf) := tree;
+		delnode(l, r)       := Node(k, l, delete(k, r))
+				       where k := minval(r, m)
+	      		
+	      ).
+
+find(_, Leaf)                 := false;
+find(n, Node(m, left, right)) :=
+	if	n = m
+	then	true
+	else if	n < m
+	then	find(n, left)
+	else	find(n, right).
+
+%	Convert list to tree
+
+list2btree([*]) :: Btree(*).
+
+list2btree([])   := Leaf;
+list2btree(x.xs) := insert(x, list2btree(xs)).
+
+%	Convert tree to list
+
+btree2list2(Btree(*), [*]) :: [*].
+
+btree2list2(Leaf, rest)                 := rest;
+btree2list2(Node(n, left, right), rest) :=
+	btree2list2(left, n.btree2list2(right, rest)).
+
+btree2list(Btree(*)) :: [*].
+
+btree2list(tree) := btree2list2(tree, []).
+
+%	Sort a list using a binary tree
+
+treesort([*]) :: [*].
+
+treesort(xs) := btree2list(list2btree(xs)).
+
+%	Try it out
+
+writeln("** Treesort Testing **").
+
+treesort(map(sin, 1..10)).

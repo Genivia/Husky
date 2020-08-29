@@ -1,0 +1,36 @@
+%	hamming.sky
+%
+%	The Hamming Problem
+%
+%	Find a list of numbers such that
+%	1. the list is in ascending order, without duplicates
+%	2. the list begins with the number 1
+%	3. if the list contains the number x, then it also contains the
+%	numbers 2x, 3x and 5x
+%	4. the list contains no other numbers
+%
+%	The list begins with [1,2,3,4,5,6,8,9,10,12,15,16,...]
+%
+%	Example:
+%	> load "hamming".
+%	> take(50, hamming).
+%	> map(writeln, hamming).
+
+merge([],     ys) := ys;
+merge(x.xs,   []) := x.xs;
+merge(x.xs, y.ys) := if      x = y then x.merge(xs, ys)
+		     else if x < y then x.merge(xs, y.ys)
+		                   else y.merge(x.xs, ys).
+
+hamming := 1.merge( map(*(2), hamming)
+		  , merge( map(*(3), hamming)
+			 , map(*(5), hamming)
+			 )
+		  ).
+
+% Note: Husky uses NOR with sharing, but does not create a cyclic structure,
+% so this is not efficient to solve the hamming problem (like many other
+% functional programming languages, though Haskell uses a cyclic internal
+% structure to compute this function efficiently). It is an example of elegant
+% programming style using lazy evaluation.
+

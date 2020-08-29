@@ -1,0 +1,72 @@
+%	matrix.sky
+%
+%	Some common matrix-vector examples.
+
+Vector == [num].
+Matrix == [[num]].
+
+%	Zero matrix
+
+zero(num, num) :: Matrix.
+
+zero(n, m) := replicate(n, replicate(m, 0)).
+
+%	Identity matrix
+
+ident(num) :: Matrix.
+
+ident(1) := [[1]];
+ident(n) := [1.replicate(n - 1, 0) | map(.(0), ident(n - 1))].
+
+%	Matrix concatenation
+
+300 infixl (--).
+
+Matrix -- Matrix :: Matrix.
+
+(--) := zipwith(++).
+
+%	Matrix transpose
+
+transpose(Matrix) :: Matrix.
+
+transpose(as.ass) := if ass = []
+                     then map(a -> [a], as)
+		     else zipwith(., as, transpose(ass)).
+
+%	Coefficient-wise matrix/vector operations
+
+500 infixl (^+).
+500 infixl (^-).
+400 infixl (^*).
+400 infixl (^/).
+
+(^+) := zipwith(+).
+(^-) := zipwith(-).
+(^*) := zipwith(*).
+(^/) := zipwith(/).
+
+500 infixl (@+).
+500 infixl (@-).
+
+(@+) := zipwith(^+).
+(@-) := zipwith(^-).
+
+%	Dot product
+
+400 infixl (.*).
+
+Vector .* Vector :: num.
+
+x .* y := sum(x ^* y) where sum := foldl(+, 0).
+
+%	Matrix multiplication
+
+400 infixl (@*).
+
+[]     @* bss := bss;
+as.ass @* bss := map(.*(as), transpose(bss)).rest
+	where rest := zipwith(., map(.*(cs), ass), ass @* css)
+	where   cs := map(hd, bss)
+	where  css := map(tl, bss).
+

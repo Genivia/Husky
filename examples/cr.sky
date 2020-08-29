@@ -1,0 +1,113 @@
+%	cr.sky
+%
+%	CR algebra (univariate only)
+%
+%	Bib refs:
+%
+%	ZIMA, E. Recurrent relations and speed-up of computations using
+%	computer algebra systems. In proceedings of DISCO (1992), LNCS 721, pp.
+%	152-161.
+%
+%	VAN ENGELEN, R. Efficient symbolic analysis for optimizing compilers.
+%	In proceedings of the ETAPS Conference on Compiler Construction 2001,
+%	LNCS 2027 (2001), pp. 118-132.
+%
+%	Example:
+%	> load "cr".
+%	> x := ADD(0, CON(1)).
+%	> fx := CON(2) <*> x <^> CON(3) <+> x.
+%	> take(10, evaluate(fx)).
+
+CR :: type.
+
+% Data			% CR form
+  CON(num) :: CR.	% {x}
+  ADD(num, CR) :: CR.	% {x, +, cr}
+  MUL(num, CR) :: CR.	% {x, *, cr}
+
+% Operations
+500 infixl (<+>).
+400 infixl (<*>).
+200 infixr (<^>).
+CR <+> CR :: CR.
+CR <*> CR :: CR.
+CR <^> CR :: CR.
+norm(CR) :: CR.
+
+% Normalization
+
+is_con(CON(x)) := true;
+is_con(_     ) := false.
+
+is_con_eq(CON(x), y) := x = y;
+is_con_eq(_,      _) := false.
+
+con(CON(x)) := x;
+con(_     ) := nil.
+
+add_unit(x, y) := if is_con_eq(y, 0) then CON(x) else ADD(x, norm(y)).
+
+mul_unit(x, y) := if is_con_eq(y, 1) then CON(x) else MUL(x, norm(y)).
+
+norm(CON(x)   ) := CON(x);
+norm(ADD(x, f)) := add_unit(x, f);
+norm(MUL(x, f)) := if x = 0 then CON(0) else mul_unit(x, f).
+
+% Addition
+
+CON(x)    <+> CON(y)    := CON(x + y);
+CON(x)    <+> ADD(y, f) := ADD(x + y, f);
+CON(x)    <+> MUL(y, f) := if is_con(f) then
+                              norm(ADD(x + y, MUL(y * (con(f)-1), f)))
+                           else nil;
+ADD(x, f) <+> CON(y)    := ADD(x + y, f);
+ADD(x, f) <+> ADD(y, g) := norm(ADD(x + y, f <+> g));
+ADD(x, f) <+> MUL(y, g) := if is_con(f) then
+                              norm(ADD(x + y, MUL(y * (con(f)-1), g) <+> f))
+                           else nil;
+MUL(x, f) <+> CON(y)    := if is_con(f) then
+                              norm(ADD(x + y, MUL(x * (con(f)-1), f)))
+                           else nil;
+MUL(x, f) <+> ADD(y, g) := if is_con(f) then
+                              norm(ADD(x + y, MUL(x * (con(g)-1), f) <+> g))
+                           else nil;
+MUL(x, f) <+> MUL(y, g) := nil.
+
+% Multiplication
+
+CON(x)    <*> CON(y)    := CON(x * y);
+CON(x)    <*> ADD(y, f) := norm(ADD(x * y, CON(x) <*> f));
+CON(x)    <*> MUL(y, f) := MUL(x * y, f);
+ADD(x, f) <*> CON(y)    := norm(ADD(x * y, CON(y) <*> f));
+ADD(x, f) <*> ADD(y, g) := norm(ADD(x * y, ADD(x, f) <*> g <+> ADD(y, g) <*> f <+> f <*> g));
+ADD(x, f) <*> MUL(y, g) := nil;
+MUL(x, f) <*> CON(y)    := MUL(x * y, f);
+MUL(x, f) <*> ADD(y, g) := nil;
+MUL(x, f) <*> MUL(y, g) := norm(MUL(x * y, f <*> g)).
+
+% Power (limited)
+
+CON(x)    <^> CON(y)    := CON(x^y);
+CON(x)    <^> ADD(y, f) := MUL(x^y, CON(x) <^> f);
+CON(x)    <^> MUL(y, f) := nil;
+ADD(x, f) <^> CON(y)    := if y > 0 then
+			      ADD(x, f) <*> ADD(x, f) <^> CON(y-1)
+                           else if y = 0 then
+			      CON(1)
+			   else nil;
+ADD(x, f) <^> _         := nil;
+MUL(x, f) <^> CON(y)    := norm(MUL(x^y, f <^> CON(y)));
+MUL(x, f) <^> ADD(y, g) := nil;
+MUL(x, f) <^> MUL(y, g) := nil.
+
+% Evaluation
+
+start(CON(x)   ) := x;
+start(ADD(x, _)) := x;
+start(MUL(x, _)) := x.
+
+shift(CON(x)   ) := CON(x);
+shift(ADD(x, f)) := ADD(x + start(f), shift(f));
+shift(MUL(x, f)) := MUL(x * start(f), shift(f)).
+
+evaluate(x) := map(start, iterate(shift, x)).

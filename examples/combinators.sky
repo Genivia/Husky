@@ -1,0 +1,81 @@
+%	combinators.sky
+%
+%	SKI combinator calculus
+%
+%	Example:
+%	> load "combinators".
+%	> Lambda1.
+%	> T(Lambda1).
+%	> Lambda2.
+%	> T(Lambda2).
+%	> Lambda3.
+%	> T(Lambda3).
+%	> Comb1.
+%	> L(Comb1).
+
+%	Lambda expression (E and V) abstract syntax
+
+E :: type.
+V :: type.
+
+Sym(V)    :: E.
+App(E, E) :: E.
+Lam(V, E) :: E.
+
+%	SKI combinator symbols are constants of type V
+
+S :: V.
+K :: V.
+I :: V.
+
+%	Free variables
+
+FV(Sym(v))    := [v];
+FV(App(x, y)) := FV(x) ++ FV(y);
+FV(Lam(v, x)) := FV(x) \\ [v].
+
+%	Translate lambda expressions into combinator form
+
+T(Sym(x))     := Sym(x);
+T(App(x, y))  := App(T(x), T(y));
+T(Lam(v, x))  := Tbody(x)
+		 where
+		 (	Tbody(Sym(u))    := if u = v
+		 			    then Sym(I)
+					    else App(Sym(K), Sym(u));
+			Tbody(App(y, z)) := if v not_in FV(y) /\ v not_in FV(z)
+					    then App(Sym(K), App(T(y), T(z)))
+					    else App(App(Sym(S), T(Lam(v, y))), T(Lam(v, z)));
+			Tbody(y)         := if v not_in FV(y)
+					    then App(Sym(K), T(y))
+					    else T(Lam(v, T(y)))
+		).
+
+%	Combinator reduction
+
+L(Sym(v))                         := Sym(v);
+L(App(Sym(I), x))                 := L(x);
+L(App(App(Sym(K), x), y))         := L(x);
+L(App(App(App(Sym(S), x), y), z)) := L(App(App(x, z), App(y, z)));
+L(App(x, y))                      := App(L(x), L(y)).
+
+%	Examples
+
+a :: V.
+b :: V.
+
+Lambda1 := Lam(a, Sym(a)).
+
+Lambda2 := Lam(a, App(Sym(b), Sym(a))).
+
+Lambda3 := Lam(a, Lam(b, App(Sym(b), Sym(a)))).
+
+Comb1 := App(App(App(Sym(S), Sym(K)), Sym(K)), Sym(a)).
+
+test1 := T(Lambda1).
+
+test2 := T(Lambda2).
+
+test3 := T(Lambda3).
+
+test4 := L(Comb1).

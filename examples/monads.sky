@@ -1,0 +1,161 @@
+%	monads.sky
+%
+%	Monads with Haskell-like syntax by Robert A. van Engelen
+
+%	A Haskell-like 'Maybe' monad:
+%
+%	This monad encapsulates a type and type's value to pass on through a
+%	sequence of function invocations. The special value 'Nothing' indicates
+%	an error condition that is propagated through the calls. It is highly
+%	recommended to read introductory material on the subject before using
+%	monads.
+
+%	Type: the 'Maybe' monad type constructor
+
+Maybe :: type.
+
+Nothing :: Maybe(T).
+Just(T) :: Maybe(T).
+
+%	Bind: a Haskell-like 'bind' for the 'Maybe' monad
+%	Note that bind is strict in the first but not second argument.
+
+968 infixl (>>=).
+Nothing >>= _ := Nothing;
+Just(x) >>= f := f(x).
+
+%	Lifting (aka monad unit): a Haskell-like 'return' for the 'Maybe' monad
+
+return(x) := Just(x).
+
+%	Failure
+
+fail(_) := Nothing.
+
+%	A Haskell-like 'then' for the 'Maybe' monad
+%	Because >>= is not strict in the second argument, we must force eval.
+%	Non-strict (_ -> f) breaks >>, so use ugly strict form (_ -> f; _ -> f)
+%       It seems this requirement is nowhere mentioned or documented in the literature on monads!?
+
+968 infixl (>>).
+x >> f := x >>= (_ -> f; _ -> f).	% := x >>= (_ -> f) does not work! We must make this strict to work!?
+
+%	The map operation from category theory (alternative monad formulation)
+
+Map(f, m) := m >>= (x -> return(f(x))).
+
+%	Let's try it
+
+writeln("** Map Testing **").
+
+Map(hd, Map(tl, Just([1,2,3])))			= Just(2).
+
+(Map(hd) @ Map(tl)): Just([1,2,3])		= Just(2).
+
+Map(hd, Map(tl, Nothing))			= Nothing.
+
+(Map(hd) @ Map(tl)): Nothing			= Nothing.
+
+%	The join operation from category theory (alternative monad formulation)
+
+Join(x) := x >>= (m -> m).
+
+%	A list monad with error checking based on 'Maybe'
+
+Head(x.xs) := return(x);
+Head([])   := Nothing.
+
+Tail(x.xs) := return(xs);
+Tail([])   := Nothing.
+
+Null([]) := return(true);
+Null(x)  := return(false).
+
+Cons(x, xs) := return(x.xs).
+
+%	Let's try it
+
+writeln("** List Testing **").
+
+(Tail([1,2]) >>= Null)				= Just(false).
+
+(Tail([]) >>= Null)				= Nothing.
+
+(Tail([1,2]) >>= (t -> Cons(1, t)) >>= Head)	= Just(1).
+
+(Tail([]) >>= (t -> Cons(1, t)))		= Nothing.
+
+%	Emulate Haskell's 'do' with macros
+
+970 infix (<-).
+
+do(x := y; z) == do(z) where x := y.
+do(x <- y; z) == y >>= (x -> do(z)).
+do(z) == z.
+
+%	Let's try it
+
+writeln("** 'do' Testing **").
+
+do(
+  x := [1,2];		% the ':=' is the 'let' in Haskell
+  y <- Tail(x);
+  Head(y)
+  )						= Just(2).
+
+%	Personally, I find the C-like { } syntax more intuitive than 'do'
+
+{x := y; z} == {z} where x := y.
+{x <- y; z} == y >>= (x -> {z}).
+{z} == z.
+
+%	Let's try it
+
+writeln("** '{}' Testing **").
+
+{
+  x := [1,2];
+  y <- Tail(x);
+  Head(y)
+}						= Just(2).
+
+{
+  x := [1,2];
+  y <- Tail(x);
+  z <- Tail(y);
+  Head(z)
+}						= Nothing.
+
+%	A simple IO monad with 'Read', 'Write', 'Writeln', 'Getc', and 'Putc'
+%	Built-in operations do not return exceptions, so these are just wrappers
+
+Read := return(read).
+
+Write(x) := return(write(x)).
+
+Writeln(x) := return(writeln(x)).
+
+Getc := return(getc).
+
+Putc(x) := return(putc(x)).
+
+%	Let's try it
+
+writeln("** 'Write' Testing **").
+
+{
+  x := 1..10;
+  f := map(+(1));
+  y := f(x);
+  Writeln(y)
+}						= Just(2..11).
+
+%	Action sequence
+
+Sequence := foldr(>>, Nothing).
+
+%	Let's try it
+
+writeln("** 'Sequence' Testing **").
+
+Sequence(map(Putc, [0'h,0'e,0'l,0'l,0'o,10]))	= Nothing.

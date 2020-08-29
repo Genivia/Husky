@@ -1,0 +1,132 @@
+%	misc.sky
+%
+%	Miscellaneous Husky definitions.
+
+%	Husky uses sharing to avoid redundant evaluations. In the Prolog term
+%	of the body of an abstraction, eval/2 functors are used to accomplish
+%	this, where the second arg is the result value. To demonstrate, the
+%	following function prints '1' only once:
+
+duo := (i -> (i,i)):(writeln(1)).
+
+%	Lazy constructors are essential to define infinite data structures. The
+%	following function returns an infinite list of zeros:
+
+zeros := 0.zeros.
+
+%	Let's get the first ten:
+
+ten_zeros := take(10, zeros).
+
+%	It is sometimes useful to declare the type of a function explicitly to
+%	make its signature more clear (and possibly more restrictive):
+
+twice :: (* -> *) -> * -> * .
+twice(f, x) := f(f(x)).
+
+%	Functions are non-strict, unless an argument pattern is used. In the
+%	following definitions, nonstrict(writeln("hello")) does not print
+%	"hello", while strict("writeln("hello")) prints "hello"
+
+nonstrict(x) := "my argument is not evaluated".
+strict1("") := "my argument is evaluated";
+strict1(x) := "my argument is evaluated".
+
+%	Argument patterns can be used within lambda abstractions (using ;):
+
+strict2 := ("" -> text; x -> text) where text := "my argument is evaluated".
+
+%	Argument patterns make for nice case statements:
+
+Color :: type.
+Red   :: Color.
+White :: Color.
+Blue  :: Color.
+paint(color) := case color of ( Red   -> "Too aggressive";
+                                White -> "Boring";
+                                Blue  -> "The color of a great thinker"
+                              ).
+
+%	Factorial as a composition of foldl(*, 1) and a range 1..
+%	Note that ..(1) = (..):1 is the starting value of the sequence
+
+fac1 := product @ ..(1) where product := foldl(*, 1).
+
+%	The 'where' construct does not support local recursive definitions. We
+%	can use the fixed-point combinator 'fix' to get around that limitation:
+
+fac8 := fix(fac, 8) where (fac(ff, 0) := 1; fac(ff, n) := n * ff(n - 1)).
+
+%	Husky does not create cyclic expression structures, so the following fib
+%	function is not efficient as it re-evaluates each fib call (for example
+%	take(15, poor_fib) to get the first 15):
+
+poor_fib := fix(f -> 1.(1.map((a, b) -> a+b, zip(f, tl(f))))).
+
+%	It does not matter if it's globally recursive like so:
+
+bad_fib := 1.(1.map((a, b) -> a+b, zip(bad_fib, tl(bad_fib)))).
+
+%	We need a fixed-point helper function to obtain linear run time:
+
+good_fib := fix(f, 1, 1) where f(ff, a, b) := a.ff(b, a + b).
+
+%	A strict version (tuple args are evaluated) is more efficient:
+
+best_fib := fix(f, (1,1)) where f(ff, (a,b)) := a.ff((b,a+b)).
+
+%	Example use of 'let', note the need for parenthesis around the 'let'
+
+let_fib(n) := ( let f(ff, (a,b), k) := if k=1 then a else ff((b,a+b), k - 1)
+                in fix(f, (1,1), n)
+              ).
+
+%	The disadvantage of 'let' is that we can't define patterns as in
+
+where_fib(n) := fix(f, n, (1,1))
+                where ( f(ff, 1, (a,b)) := a;
+                        f(ff, n, (a,b)) := ff(n-1, (b,a+b))
+                      ).
+
+%	We can use indexing with ? to get the nth fib value
+
+fast_fib(n) := best_fib ? n.
+
+%	Defining tails - the list of tails of a list - shows concise syntax
+
+tails(x.xs) := (x.xs).tails(xs);
+tails([])   := [[]].
+
+%	Using the application operator as a (curried) function
+%	Question, is the following legal? : : sin : 1
+%	Answer: yes, since it denotes :(sin, 1) = sin:1 = sin(1)
+
+sincos(n) := zipwith(:, [sin, cos], cycle([n])).
+
+%	Ackerman function
+
+A(0, n) := n+1;
+A(m, 0) := A(m-1, 1);
+A(m, n) := A(m-1, A(m,n-1)).
+
+%	Collatz conjecture (hailstone numbers)
+%	#C(n) gives number of steps to reach 1 for value n>1, e.g. #C(27)=111
+
+C(n) := takewhile(<>(1), iterate(f, n))
+        where f(k) := if even(k) then k div 2 else 3*k + 1.
+
+%	Cartesian product
+
+cartesian([],    _) := [];
+cartesian(x.xs, ys) := fix(zip1, x, ys) ++ cartesian(xs, ys)
+                       where ( zip1(_, _,   []) := [];
+                               zip1(z, x, y.ys) := (x,y).z(x, ys)
+                             ).
+
+%	this is a lot simpler to write with a list comprehension
+
+cart(xs, ys) := [ (x,y) | x <- xs; y <- ys ].
+
+%	Ackerman series of 3x6 table
+
+ackerman3x6 := map((m, n) -> A(m, n), cart(0..3, 0..6)).
