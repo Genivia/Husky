@@ -33,7 +33,7 @@
 
 :- module(husky, [husky/0, husky/1, husky/2, repl/0]).
 
-:- ensure_loaded(
+:- use_module(
         [ library(check),
           library(lists),
           library(qsave),
@@ -41,34 +41,34 @@
           library(statistics)
         ]).
 
-%       Set or override operator precedences and associativities
-
-user:set_ops :-
+:-
         set_prolog_flag(allow_dot_in_atom, true),
         set_prolog_flag(back_quotes, symbol_char),
         set_prolog_flag(character_escapes, false),
         set_prolog_flag(allow_variable_name_as_functor, true),
         set_prolog_flag(optimise, true),
-        set_prolog_flag(history, 100),
-        op(1098,  fx, [prefix, postfix, infix, infixl, infixr]),
-        op(1098, xfx, [prefix, postfix, infix, infixl, infixr]),
-        op(974,  xfx, ==),
-        op(972,  yfx, where),
-        op(970,  xfy, [:=, ::, ->]),
-        op(950,  yfx, //),
-        op(770,  yfx, \/),
-        op(760,  yfx, /\),
-        op(750,   fy, \),
-        op(700,  xfx, [=, <>, <, <=, >, >=]),
-        op(600,  yfx, [min, max]),
-        op(400,  yfx, [div, mod]),
-        op(110,  yfx, :),
-        op(100,  xfy, '.'),
-        op(100,   fx, [remove, load, save]).
+        set_prolog_flag(history, 100).
 
-:- initialization user:set_ops.
+%       Set operator precedences and associativities
 
-:- user:set_ops.
+set_ops :-
+        op(1098,  fx, husky:[prefix, postfix, infix, infixl, infixr]),
+        op(1098, xfx, husky:[prefix, postfix, infix, infixl, infixr]),
+        op(974,  xfx, husky:[==]),
+        op(972,  yfx, husky:[where]),
+        op(970,  xfy, husky:[:=, ::, ->]),
+        op(950,  yfx, husky:[//]),
+        op(770,  yfx, husky:[\/]),
+        op(760,  yfx, husky:[/\]),
+        op(750,   fy, husky:[\]),
+        op(700,  xfx, husky:[=, <>, <, <=, >, >=]),
+        op(600,  yfx, husky:[min, max]),
+        op(400,  yfx, husky:[div, mod]),
+        op(110,  yfx, husky:[:]),
+        op(100,  xfy, husky:['.']),
+        op(100,   fx, husky:[remove, load, save]).
+
+:- set_ops.
 
 %       husky/0
 %       Start a new Husky REPL and perform a soft reset
@@ -82,7 +82,7 @@ husky :-
 %       Read-evaluate-print loop
 
 repl :-
-        repeat, read_history(history, '!history', [end_of_file], '> ', Term, Bindings),
+        repeat, read_history(history, '!history', [module(husky), end_of_file], '> ', Term, Bindings),
                 husky(Term, Bindings),
                 Term == bye, !.
 
@@ -727,7 +727,7 @@ apply((load),          F,          true) :-
         absolute_file_name(S, [access(read), extensions(['sky', '']), file_errors(fail)], A),
         flag(profiling, _, 0),
         see(A),
-        repeat, read_term(T, [variable_names(Bindings)]),
+        repeat, read_term(T, [module(husky), variable_names(Bindings)]),
                 husky(T, Bindings),
         T == end_of_file, !,
         seen.

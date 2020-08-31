@@ -633,7 +633,8 @@ To delete examples from memory and reset Husky to system defaults:
 
     > reset.
 
-To create a stand-alone executable, run `swipl' and enter:
+To create a stand-alone executable, run `swipl` and enter the following
+commands:
 
     $ swipl
     :- [husky].
