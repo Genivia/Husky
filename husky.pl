@@ -26,7 +26,7 @@
 %                       'let', changed 'in' to 'is_in' and added 'not_in'
 %       2.4  4/19/2009  added list comprehensions as macros in prelude.sky
 %       2.5 11/22/2009  compatible with SWI Prolog 5.10.4
-%       2.6  8/29/2020  compatible with SWI Prolog 8.2.1
+%       2.6  8/31/2020  compatible with SWI Prolog 8.2.1
 %
 %       License: GNU Public License (GPL)
 %       Author (c) 1999-2020: Robert A. van Engelen
@@ -41,12 +41,14 @@
           library(statistics)
         ]).
 
-:-
-        set_prolog_flag(allow_dot_in_atom, true),
+%       Set SWI-Prolog flags
+
+:-      set_prolog_flag(allow_dot_in_atom, true),
         set_prolog_flag(back_quotes, symbol_char),
         set_prolog_flag(character_escapes, false),
         set_prolog_flag(allow_variable_name_as_functor, true),
         set_prolog_flag(optimise, true),
+        set_prolog_flag(print_write_options, [module(husky), quoted(true)]),
         set_prolog_flag(history, 100).
 
 %       Set operator precedences and associativities
@@ -68,7 +70,7 @@ set_ops :-
         op(100,  xfy, husky:['.']),
         op(100,   fx, husky:[remove, load, save]).
 
-:- set_ops.
+:-      set_ops.
 
 %       husky/0
 %       Start a new Husky REPL and perform a soft reset
