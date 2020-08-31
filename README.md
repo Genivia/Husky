@@ -44,24 +44,25 @@ The `apply` operation takes a lambda `A -> B` to apply to the unevaluated `X`,
 then returns `B` when `A` is a variable.  If `A` is not a variable, then
 pattern matching is used by evaluating `X` to `V` and unifying `A` with `V`.
 
-Sharing is implemented internally by an `eval(X, V)` functor that holds an
-(un)evaluated expression `X` and a variable `V`.  When `X` is evaluated to a
-value, variable `V` is set to that value, thereby sharing the value `V` to all
-uses of `X` (in the form of `eval(X, V)`) in an expression.
+Sharing is implemented internally by using an `eval(X, V)` functor that holds
+an (un)evaluated expression `X` and variable `V`.  When `X` is evaluated to a
+value, variable `V` is set to that value, thereby sharing the value of `V` to
+all uses of `V` (which are of the form of `eval(X, V)`) in an expression.
 
 This reduction method makes Husky run fast, asymptotically as fast as Haskell.
 Except that Husky does not optimize tail recursion, meaning that very deep
 recursive calls will eventually fail.
 
-The polymorphic type of a lambda is defined as a Prolog rule, which has a
-ono-to-one correspondence to Post system rules that are often used to define
-polymorphic type systems with rules for type inference:
+Type inference is performed by Prolog inference.  Type rules are expressed as
+Prolog clauses for the Husky type inference operator `::`.  These clauses have
+a one-to-one correspondence to Post system rules that are often used to define
+polymorphic type systems with rules for type inference.  For example, the
+polymorphic type of a lambda is defined as a Prolog rule:
 
     (A -> B) :: Alpha -> Beta :- A :: Alpha, B :: Beta.
 
 This rule infers the type of a lambda as `Alpha -> Beta` if argument `A` is of
-type `Alpha` and `B` is of type `Beta`.  The Curry-Howard correspondence
-follows from this rule.
+type `Alpha` and `B` is of type `Beta`.
 
 The type rule for lambda application (`:`) uses Prolog unification with the
 "occurs check" to safely implement the Hindley-Milner-style parametric
@@ -71,9 +72,20 @@ polymorphic type system of Husky:
 
 It is that simple!
 
+The Curry-Howard correspondence (the link between logic and computation)
+trivially follows by observing that the plain unoptimized beta reduction rule
+is the same as the type inference rule for application without the occurs
+check:
+
+    apply(F, A, B) :- eval(F, (A -> B)).
+    F:A :: Beta :- F :: (Alpha -> Beta), A :: Alpha.
+
+In both rules `A` and its type `Alpha` are unified with the lambda argument to
+produce `B` and its type `Beta`.
+
 Because Husky evaluation rules and type inference rules are defined in Prolog,
 the implementation is easy to understand and change, for example to add
-features or to change the language.
+features, to change the language, and to experiment with type systems.
 
 Husky syntax
 ------------
