@@ -141,7 +141,9 @@ as prelude functions, see [Functions](#functions).
 
 In Husky, `v->b` is a lambda (abstraction) with argument `v` and body
 expression `b`.  Applications of lambdas are written with a colon (`:`), for
-example `(v->v+1):3` applies the lambda `v->v+1` to the value `3` giving `4`.
+example `(v->v+1):3` applies the lambda `v->v+1` to the value `3` giving `3+1`
+which evaluates to `4`.
+
 When applying named functions the usual parenthesized form can be used, for
 example `f(3)` to apply `f` to the value `3`.  Also `f:3` is permitted.
 
@@ -154,7 +156,8 @@ intuitive, for example `+(1)` is the increment function, `*(2)` doubles, and
 Lists in Husky are written with brackets, for example`[]` and `[1,2]`.  The
 special form `[x|xs]` represents a list with head expression `x` and tail
 expression `xs`.  The dot notation `x.xs` is also allowed to represent a list
-with head `x` and tail `xs`, where `.` is the list constructor function.
+with head `x` and tail `xs`, where `.` is the list constructor function
+commonly referred to as "cons".
 
 Definitions
 -----------
@@ -448,7 +451,20 @@ Macros are defined with `==` to serve as shorthands for expressions and types:
 
 Macro expansion is structural: names, functions, lists, and other syntactic
 structures can be defined as macros with parameters, i.e. macros support
-pattern matching for macro specialization.
+pattern matching for macro specialization.  Parameter names in macros are
+unified (viz.  Prolog unification) to structurally match macro definitions
+without evaluating the arguments.
+
+For example:
+
+    > macro(x, x) == "equal".
+    > macro(x, y) == "not equal".
+    > macro(1, 1).
+    "equal" :: string
+    > macro(1, 2).
+    "not equal" :: string
+    > macro(1, 1+0).
+    "not equal" :: string
 
 In fact, list comprehension syntax is entirely implemented by recursive macro
 expansion into `concat`, `map`, and `filter` (defined in prelude.sky):
@@ -474,9 +490,9 @@ The monad `do` operator (defined in monads.sky):
     do(x <- y; z) == y >>= (x -> do(z)).
     do(z) == z.
 
-Note that macros do not evaluate arguments!  Only syntactical structures can be
-pattern matched.  New syntax can be introduced by declaring prefix, infix, and
-postfix opertors, see [Commands](#commands).
+Macros do not evaluate arguments!  Only syntactical structures can be pattern
+matched.  New syntax can be introduced by declaring prefix, infix, and postfix
+opertors, see [Commands](#commands).
 
 Special constructs
 ------------------
