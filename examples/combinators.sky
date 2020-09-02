@@ -1,6 +1,8 @@
 %	combinators.sky
 %
 %	SKI combinator calculus
+%       Ch.7 "The Study of Programming Languages" by Ryan Stansifer
+%       https://en.wikipedia.org/wiki/SKI_combinator_calculus
 %
 %	Example:
 %	> load "combinators".

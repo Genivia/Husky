@@ -33,12 +33,12 @@ return(x) := Just(x).
 fail(_) := Nothing.
 
 %	A Haskell-like 'then' for the 'Maybe' monad
-%	Because >>= is not strict in the second argument, we must force eval.
-%	Non-strict (_ -> f) breaks >>, so use ugly strict form (_ -> f; _ -> f)
+%	Because >>= is not strict in the second argument, we must force eval!
+%	Non-strict (_ -> f) breaks >>, so we use ugly strict form (_ -> f; _ -> f)
 %       It seems this requirement is nowhere mentioned or documented in the literature on monads!?
 
 968 infixl (>>).
-x >> f := x >>= (_ -> f; _ -> f).	% := x >>= (_ -> f) does not work! We must make this strict to work!?
+x >> f := x >>= (_ -> f; _ -> f).	% := x >>= (_ -> f) does not work! We must make this strict to work
 
 %	The map operation from category theory (alternative monad formulation)
 
@@ -104,6 +104,7 @@ do(
   )						= Just(2).
 
 %	Personally, I find the C-like { } syntax more intuitive than 'do'
+%       so let's define { } macros
 
 {x := y; z} == {z} where x := y.
 {x <- y; z} == y >>= (x -> {z}).

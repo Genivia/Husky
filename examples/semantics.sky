@@ -1,6 +1,8 @@
 %	semantics.sky
 %
 %	Denotational semantics
+%       Ch.9.1 "Syntax and Semantics of Programming Languages" by Ken Slonneger and Barry Kurtz
+%       Ch.8 "The Study of Programming Languages" by Ryan Stansifer
 %
 %	Examples:
 %	> load "semantics".
@@ -62,13 +64,13 @@ S(While(x, s), state)    := if E(x, state) <> 0 then fix(while, state) else stat
 a :: Variable.
 b :: Variable.
 
-%	Compute a = 0 and b = a+1
+%	Compute a = 0; b = a+1
 
 Program1 := Sequence(
 		Assign(a, Val(0)),
 		Assign(b, Add(Var(a), Val(1)))).
 
-%	Compute a = 0 and b = (a+1)<>0 ? 2 : 3
+%	Compute a = 0; b = a+1 ? 2 : 3
 
 Program2 := Sequence(
 		Assign(a, Val(0)),

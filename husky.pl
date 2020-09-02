@@ -84,7 +84,7 @@ husky :-
 %       Read-evaluate-print loop
 
 repl :-
-        repeat, read_history(history, '!history', [module(husky), end_of_file], '> ', Term, Bindings),
+        repeat, read_history(history, '!history', [module(husky), end_of_file], '~!> ', Term, Bindings),
                 husky(Term, Bindings),
                 Term == bye, !.
 
