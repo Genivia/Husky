@@ -253,7 +253,7 @@ dropwhile(p, x.xs) := if p(x) then dropwhile(p, xs) else x.xs.
 takewhile(p,   []) := [];
 takewhile(p, x.xs) := if p(x) then x.takewhile(p, xs) else [].
 
-%	interval a..b generates a list of integers in range a to b
+%	a..b generates a list of integers from a to b
 
 650 infix (..).
 
