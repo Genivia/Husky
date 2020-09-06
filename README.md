@@ -215,13 +215,14 @@ Husky has three built-in type constructors:
 New parametric data types and their constructors can be defined as follows:
 
     MyType :: type.
-    Constructor1(arg1, arg2, ..., argm) :: MyType(parm1, parm2, ..., parmn).
+    Constructor1(arg1, arg2, ...) :: MyType(parm1, parm2, ...).
     ...
-    ConstructorN(arg1, arg2, ..., argk) :: MyType(parm1, parm2, ..., parmn).
+    ConstructorN(arg1, arg2, ...) :: MyType(parm1, parm2, ...).
 
-Any name can be used to represent a type parameter, even symbols.  Therefore, a
-polymorphic list type can be written as `[alpha]` or simply `[*]`.  For
-example, the comparison operator `=` has type `(=) :: * -> * -> bool`.
+A type variable is a name, except `bool`, `num`, and `string`.  Also symbols
+such as `*` and `**` can be used as type variables.  For example, a polymorphic
+list type can be written as `[alpha]` or `[*]` and the comparison operator `=`
+has type `(=) :: * -> * -> bool`.
 
 Some examples of named types and parametric types:
 
@@ -642,7 +643,7 @@ commands:
     > save.
     > bye.
 
-This creates the `husky' executable with the prelude functions preloaded.
+This creates the `Husky' executable with the prelude functions preloaded.
 
 Husky source files:
 
