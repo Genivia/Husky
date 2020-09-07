@@ -6,10 +6,10 @@ Lazy functional programming with Husky
 - [Types](#types)
 - [Examples](#examples)
 - [Functions](#functions)
+- [Lambdas](#lambdas)
 - [List comprehension](#list-comprehension)
 - [Macros](#macros)
 - [Special constructs](#special-constructs)
-- [Lambdas](#lambdas)
 - [Commands](#commands)
 - [Gotchas](#gotchas)
 - [Installation](#installation)
@@ -212,7 +212,7 @@ Husky has three built-in type constructors:
     (alpha, beta)    a tuple is the product of types alpha and beta
     alpha -> beta    a function mapping elements of type alpha to type beta
 
-New parametric data types and their constructors can be defined as follows:
+New (parametric) data types and their constructors can be defined as follows:
 
     MyType :: type.
     Constructor1(arg1, arg2, ...) :: MyType(parm1, parm2, ...).
@@ -258,65 +258,60 @@ Examples
 --------
 
     > a := 2.
-    DEFINED a::num
+    { DEFINED a::num }
 
     > f(x) := x+1.
-    DEFINED f::num->num
+    { DEFINED f::num->num }
 
     > f(a).
     3 :: num
 
-    % the same function f, now using the colon syntax:
+    % the same function f, using the colon syntax for application:
     > f:x := (+):x:1.
-    DEFINED f::num->num
+    { DEFINED f::num->num }
 
-    % the same function f, now using currying:
+    % the same function f, using currying:
     > f := +(1).
-    DEFINED f::num->num
+    { DEFINED f::num->num }
 
-    % In fact, the function definitions are translated into lambda expressions. For
-    % example, typing the function name returns its lambda expression:
+    % function definitions are translated to lambdas,
+    % typing the function name returns its lambda expression:
 
     > f(a) := a+1.
-    DEFINED f::num->num
+    { DEFINED f::num->num }
     > f.
     $0->$0+1 :: num->num
 
     > plus(x,y) := x+y.
-    DEFINED plus::num->num->num
+    { DEFINED plus::num->num->num }
     > plus.
     $0->$1->$0+$1 :: num->num->num
 
-    % A lambda expression can have alternative definitions (of the same type)
-    % separated by ';', for example the factorial function:
-
-    % a function with argument specializations:
+    % a lambda can be specialized by multiple abstractions, each
+    % separated by a ';', e.g. the factorial function:
     > fact(0) := 1;
       fact(n) := n*fact(n-1).
-    DEFINED fac::num->num
+    { DEFINED fac::num->num }
     > fact.
     0->1;$0->$0*fac($0-1) :: num->num
     > fact(6).
     720 :: num
 
-    % Constants can be used to construct new data types, like BinTree:
+    % constants can be defined to construct new data types
 
-    % a BinTree type:
+    % declare a BinTree type:
     > BinTree :: type.
-    DECLARED BinTree::type.
+    { DECLARED BinTree::type }
 
-    % define a type synonym (shortcut macro) for BinTree of num:
-    > Numtree == BinTree(num).
+    % define a Leaf constant:
+    > Leaf :: BinTree(*).
+    { DECLARED Leaf::BinTree($0) }
 
-    % define the Leaf constant:
-    > Leaf :: Numtree.
-    DECLARED Leaf::BinTree(num).
-
-    % define the Node constructor:
-    > Node(num, Numtree, Numtree) :: Numtree.
+    % define a Node constructor:
+    > Node(*, BinTree(*), BinTree(*)) :: BinTree(*).
     Node(num, BinTree(num), BinTree(num)) :: BinTree(num).
 
-    % Let's try it out by building a tree:
+    % try it out by building a small tree (see examples/btree.sky):
     > Node(3, Node(1, Leaf, Leaf), Node(4, Leaf, Leaf)).
     Node(3, Node(1, Leaf, Leaf), Node(4, Leaf, Leaf)) :: BinTree(num)
 
@@ -421,6 +416,50 @@ Built-in operators and functions are defined in prelude.sky:
     curry       curry function curry(f, x, y) := f((x, y))
     uncurry     uncurry function uncurry(f, (x, y)) := f(x, y)
 
+Lambdas
+-------
+
+A lamba (abstraction) is written as `v->b`.  When a lambda has alternatives as
+arguments for function specialization with choices among a collection of
+argument values, such as constants and partial data structures, then the lambda
+alternatives should be separated by semicolons (`;`):
+
+    (v->b)                  a lambda abstraction
+    (v->b; w->c)            a lambda with two specializations
+
+Argument `v` and `w` may be a name, a constant, or a constructor with named
+parameters.  The body of a lambda is just an expression.
+
+Lambdas in expression are parenthesized, because the `->` operator has a low
+precedence.
+
+Function application is performed with the conventional syntax of argument
+parameterization:
+
+    > f := (x->x+1).
+    { DEFINED f::num->num }
+    > f(3).
+    4 :: num
+
+However, applying a lambda directly to an argument requires the `:` application
+operator:
+
+    > (x->x+1):3.
+    4 :: num
+
+Functions and functions with specializations are automatically translated to
+the corresponding lambda abstractions when stored with the program:
+
+    > f(x) := x+1.
+    { DEFINED f::num->num }
+    > f.
+    ($0->$0+1) :: (num->num)
+    > iszero(0) := true;
+    |: iszero(n) := false.
+    { DEFINED iszero::num->bool }
+    > iszero.
+    (0->true;$0->false) :: (num->bool)
+
 List comprehension
 ------------------
 
@@ -514,50 +553,6 @@ For example:
     test := (let f := ^(2); start := 1; end := 10 in map(f, start..end)).
 
     case n of (1 -> "one"; 2 -> "two"; 3 -> "three")
-
-Lambdas
--------
-
-A lamba (abstraction) is written as `v->b`.  When a lambda has alternatives as
-arguments for function specialization with choices among a collection of
-argument values, such as constants and partial data structures, then the lambda
-alternatives should be separated by semicolons (`;`):
-
-    (v->b)                  a lambda abstraction
-    (v->b; w->c)            a lambda with two specializations
-
-Argument `v` and `w` may be a name, a constant, or a constructor with named
-parameters.  The body of a lambda is just an expression.
-
-Lambdas in expression are parenthesized, because the `->` operator has a low
-precedence.
-
-Function application is performed with the conventional syntax of argument
-parameterization:
-
-    > f := (x->x+1).
-    { DEFINED f::num->num }
-    > f(3).
-    4 :: num
-
-However, applying a lambda directly to an argument requires the `:` application
-operator:
-
-    > (x->x+1):3.
-    4 :: num
-
-Functions and functions with specializations are automatically translated to
-the corresponding lambda abstractions when stored with the program:
-
-    f(x) := x+1.
-    { DEFINED f::num->num }
-    f.
-    ($0->$0+1) :: (num->num)
-    > iszero(0) := true;
-    |: iszero(n) := false.
-    { DEFINED iszero::num->bool }
-    > iszero.
-    (0->true;$0->false) :: (num->bool)
 
 Commands
 --------
@@ -660,7 +655,7 @@ After starting Husky, load any one of the example .sky files with:
 
     > load "examples/<filename>".
 
-To delete examples from memory and reset Husky to system defaults:
+To delete programs from memory and reset Husky to system defaults:
 
     > reset.
 
@@ -673,7 +668,9 @@ commands:
     > save.
     > bye.
 
-This creates the `Husky' executable with the prelude functions preloaded.
+This creates the `Husky' executable with the prelude functions preloaded.  You
+can also load one or more programs and then save the executable with the
+programs included.
 
 Husky source files:
 

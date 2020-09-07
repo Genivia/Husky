@@ -27,6 +27,7 @@
 %       2.4  4/19/2009  added list comprehensions as macros in prelude.sky
 %       2.5 11/22/2009  compatible with SWI Prolog 5.10.4
 %       2.6  8/31/2020  compatible with SWI Prolog 8.2.1
+%       2.7  9/4/2020   work around SWI Prolog 8.2.1 bug
 %
 %       License: GNU Public License (GPL)
 %       Author (c) 1999-2020: Robert A. van Engelen
@@ -41,19 +42,17 @@
           library(statistics)
         ]).
 
-%       Set SWI-Prolog flags
 
-:-      set_prolog_flag(allow_dot_in_atom, true),
+%       Set SWI-Prolog flags and operator precedences and associativities
+
+init :-
+        set_prolog_flag(allow_dot_in_atom, true),
         set_prolog_flag(back_quotes, symbol_char),
         set_prolog_flag(character_escapes, false),
         set_prolog_flag(allow_variable_name_as_functor, true),
         set_prolog_flag(optimise, true),
         set_prolog_flag(print_write_options, [module(husky), quoted(true)]),
-        set_prolog_flag(history, 100).
-
-%       Set operator precedences and associativities
-
-set_ops :-
+        set_prolog_flag(history, 100),
         op(1098,  fx, husky:[prefix, postfix, infix, infixl, infixr]),
         op(1098, xfx, husky:[prefix, postfix, infix, infixl, infixr]),
         op(974,  xfx, husky:[==]),
@@ -70,7 +69,7 @@ set_ops :-
         op(100,  xfy, husky:['.']),
         op(100,   fx, husky:[remove, load, save]).
 
-:-      set_ops.
+:- init.
 
 %       husky/0
 %       Start a new Husky REPL and perform a soft reset
@@ -84,6 +83,8 @@ husky :-
 %       Read-evaluate-print loop
 
 repl :-
+        init,
+        module(husky), % an ugly hack to work around read_history(... [module(husky)]) bug
         repeat, read_history(history, '!history', [module(husky), end_of_file], '~!> ', Term, Bindings),
                 husky(Term, Bindings),
                 Term == bye, !.
@@ -154,7 +155,7 @@ pragma(reset) :-
         erase(Ref),
         fail.
 pragma(reset) :- !,
-        set_ops,
+        init,
         husky(load "prelude").
 pragma(save) :-
         qsave_program('Husky', [goal = true, toplevel = repl, op = save]), !.
