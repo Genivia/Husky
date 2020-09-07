@@ -485,7 +485,7 @@ expansion into `concat`, `map`, and `filter` (defined in prelude.sky):
     [ x | x <- xs ] == xs.
     [ f | x <- xs ] == map(x -> f, xs).
 
-The monad `do` operator (defined in monads.sky):
+The monad `do` operator (defined in monads.sky) is a macro:
 
     do(x := y; z) == do(z) where x := y.
     do(x <- y; z) == y >>= (x -> do(z)).
@@ -493,7 +493,7 @@ The monad `do` operator (defined in monads.sky):
 
 Macros do not evaluate arguments!  Only syntactical structures can be pattern
 matched.  New syntax can be introduced by declaring prefix, infix, and postfix
-opertors, see [Commands](#commands).
+operators, see [Commands](#commands).
 
 Special constructs
 ------------------
@@ -519,15 +519,45 @@ Lambdas
 -------
 
 A lamba (abstraction) is written as `v->b`.  When a lambda has alternatives as
-arguments, i.e. a set of argument choices such as constants and partial data
-structures, then the alternatives should be separated by semicolons (`;`).
+arguments for function specialization with choices among a collection of
+argument values, such as constants and partial data structures, then the lambda
+alternatives should be separated by semicolons (`;`):
 
-Functions with alternative formal arguments are automatically translated to the
-corresponding lambda abstractions.
+    (v->b)                  a lambda abstraction
+    (v->b; w->c)            a lambda with two specializations
 
-    v->b                    lambda abstraction
-    (v->b):a                application of a lambda to an argument
-    (v->b; w->c):a          application of a lambda with specializations
+Argument `v` and `w` may be a name, a constant, or a constructor with named
+parameters.  The body of a lambda is just an expression.
+
+Lambdas in expression are parenthesized, because the `->` operator has a low
+precedence.
+
+Function application is performed with the conventional syntax of argument
+parameterization:
+
+    > f := (x->x+1).
+    { DEFINED f::num->num }
+    > f(3).
+    4 :: num
+
+However, applying a lambda directly to an argument requires the `:` application
+operator:
+
+    > (x->x+1):3.
+    4 :: num
+
+Functions and functions with specializations are automatically translated to
+the corresponding lambda abstractions when stored with the program:
+
+    f(x) := x+1.
+    { DEFINED f::num->num }
+    f.
+    ($0->$0+1) :: (num->num)
+    > iszero(0) := true;
+    |: iszero(n) := false.
+    { DEFINED iszero::num->bool }
+    > iszero.
+    (0->true;$0->false) :: (num->bool)
 
 Commands
 --------
