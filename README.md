@@ -16,10 +16,10 @@ Lazy functional programming with Husky
 - [Author](#author)
 - [License](#license)
 
-Husky is a lazy functional language similar to Haskell.  Husky implements a
-Hindley-Milner-style parametric polymorphic type system, higher-order
-functions, argument pattern matching for function specialization, currying,
-macros, list comprehension, and monads.
+Husky is a lazy functional language similar to Haskell, but with a more
+conventional syntax.  Husky implements a Hindley-Milner-style parametric
+polymorphic type system, higher-order functions, argument pattern matching for
+function specialization, currying, macros, list comprehension, and monads.
 
 Husky uses NOR (normal order reduction), WHNF (weak head normal form), sharing
 (an important lazy evaluation optimization), and lazy constructors to create
@@ -134,7 +134,7 @@ program.  Input may span one or more lines and should end with a period (`.`).
     [(1, true), (2, true), (3, false)] :: [(num, bool)]
 
 Type variables and formal arguments of functions and lambdas are internally
-anonymized and replaced by `$i` where `i` is an integer.
+anonymized as Prolog variables and displayed as `$i` where `i` is an integer.
 
 Many functions and operators are predefined in Husky, either as built-ins or
 as prelude functions, see [Functions](#functions).
@@ -155,9 +155,9 @@ intuitive, for example `+(1)` is the increment function, `*(2)` doubles, and
 
 Lists in Husky are written with brackets, for example`[]` and `[1,2]`.  The
 special form `[x|xs]` represents a list with head expression `x` and tail
-expression `xs`.  The dot notation `x.xs` is also allowed to represent a list
-with head `x` and tail `xs`, where `.` is the list constructor function
-commonly referred to as "cons".
+expression `xs`.  The dot notation `x.xs` represents a list with head `x` and
+tail `xs`, where `.` is the list constructor function commonly referred to as
+"cons".
 
 Definitions
 -----------
@@ -181,17 +181,17 @@ define pattern arguments for function specialization:
 Multiple definitions of a function typically have constants and data structures
 as arguments for which the function has a specialized function body.
 
-A wildcard formal argument `_` is permitted.  For example to define the `const`
-function:
+A wildcard formal argument `_` is permitted and represents an unused argument.
+For example to define the `const` combinator function:
 
     const(x, _) := x.
 
 Types
 -----
 
-Types are automatically inferred, like Haskell.  Types can also be explicitly
-associated with definitions using the `::` operator.  New named types and
-parametric types can be defined.
+Types are automatically inferred, like in Haskell.  Types can also be
+explicitly associated with definitions using the `::` operator.  New named
+types and parametric types can be defined.
 
 Husky has three built-in atomic types:
 
@@ -201,7 +201,7 @@ Husky has three built-in atomic types:
 
 - the Boolean type has two values `true` and `false`;
 - rationals are written with `rdiv` in the form `numerator rdiv denominator`;
-- floats are written conventionally with +/- sign, a period, and exponent;
+- floats are written conventionally with +/- sign, a period, and exponent `E`;
 - strings are sequences of characters enclosed in double quotes (`"`);
 - the `nil` constant denotes the so-called "bottom value" (an undefined value)
   and is polymorphic.
@@ -419,10 +419,11 @@ Built-in operators and functions are defined in prelude.sky:
 Lambdas
 -------
 
-A lamba (abstraction) is written as `v->b`.  When a lambda has alternatives as
-arguments for function specialization with choices among a collection of
-argument values, such as constants and partial data structures, then the lambda
-alternatives should be separated by semicolons (`;`):
+A lamba (abstraction) is written as `v->b`.  A lambda expression may have
+several lambda alternatives for function specialization.  Alternatives are
+represented by lambdas separated by semicolons (`;`).  Each lambda should
+specify a specialized argument for selection, such as constants and partial
+data structures.
 
     (v->b)                  a lambda abstraction
     (v->b; w->c)            a lambda with two specializations
@@ -430,8 +431,8 @@ alternatives should be separated by semicolons (`;`):
 Argument `v` and `w` may be a name, a constant, or a constructor with named
 parameters.  The body of a lambda is just an expression.
 
-Lambdas in expression are parenthesized, because the `->` operator has a low
-precedence.
+Lambdas should be parenthesized when used in expressions, because the `->`
+and `;` operators have a low precedence.
 
 Function application is performed with the conventional syntax of argument
 parameterization:
@@ -440,6 +441,8 @@ parameterization:
     { DEFINED f::num->num }
     > f(3).
     4 :: num
+    > iszero := (0->true; n->false).
+    { DEFINED iszero::num->bool }
 
 However, applying a lambda directly to an argument requires the `:` application
 operator:
@@ -539,7 +542,7 @@ Special constructs
 
     if b then x else y      a conditional expression
 
-    x where y := z          each y in x is replaced by z
+    x where y := z          each y in expression x is replaced by expression z
 
     fix(f)                  the fixed-point Y-combinator (fix:f = f:(fix:f))
 
@@ -583,25 +586,24 @@ Commands
 Gotchas
 -------
 
-- Patterns in function arguments may consist of (parameterized) constants,
-  empty list `[]`, `x.xs` non-empty list with head `x` and tail `xs`, and
-  tuples `(x,y)`.  These should not be nested:
 
-      BAD:
-      f((x,y).xs) := ...
+- An expression or command must be terminated by a period (`.`).
 
-      GOOD:
-      f(p.xs) := ... where (x,y) := p.
+- There cannot be a space after the list cons dot (`.`) operator in `x.xs`,
+  otherwise the system considers the input line has ended.  As an alternative
+  use `[x|xs]`, for example if `xs` is a compound expression.
 
-      BAD:
-      f(BinTree(BinTree(left, right), rest)) := ...
+- There must be a space between different operators, otherwise the system is
+  not able to separate the operators and parse the expression.  For example:
 
-      GOOD:
-      f(BinTree(tree, rest)) := ...
-              where left := f(tree)
-              where right := g(tree)
-              where f(BinTree(l, r)) := l
-              where g(BinTree(l, r)) := r.
+      x\/\y           should be written         x\/ \y
+      x+#l            should be written         x+ #l
+      x*-y            should be written         x* -y
+      x<-y            should be written         x< -y
+
+- Parenthesization follows the Prolog syntax, so `f(x,y)` works, but `f(x)(y)`
+  causes a syntax error.  Instead, use colons, e.g. `f:x:y` or a mixed form
+  such as `f(x):y`.
 
 - The scope of the `where` construct is limited to its left-hand side.
   Therefore, it does not support recursive definitions:
@@ -621,20 +623,25 @@ Gotchas
   which displays "abc" even though `y` is not used, because tuple members are
   evaluated.
 
-- There must be a space between operators, otherwise the system is not able to
-  parse the expression.  For example:
+- Patterns in function arguments may consist of (parameterized) constants,
+  empty list `[]`, `x.xs` non-empty list with head `x` and tail `xs`, and
+  tuples `(x,y)`.  These should not be nested:
 
-      x\/\y           should be written         x\/ \y
-      x+#l            should be written         x+ #l
-      x*-y            should be written         x* -y
-      x<-y            should be written         x< -y
+      BAD:
+      f((x,y).xs) := ...
 
-- Parenthesization follows the Prolog syntax, so `f(x,y)` works, but `f(x)(y)`
-  causes a syntax error.  Instead, use colons, e.g. `f:x:y` or a mixed form
-  such as `f(x):y`.
+      GOOD:
+      f(p.xs) := ... where (x,y) := p.
 
-- There cannot be a space after the dot (`.`) operator, otherwise the system
-  considers the input line has ended. In this case, use parenthesis.
+      BAD:
+      f(BinTree(BinTree(left, right), rest)) := ...
+
+      GOOD:
+      f(BinTree(tree, rest)) := ...
+              where left := f(tree)
+              where right := g(tree)
+              where f(BinTree(l, r)) := l
+              where g(BinTree(l, r)) := r.
 
 Installation
 ------------
